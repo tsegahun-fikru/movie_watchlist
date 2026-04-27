@@ -6,6 +6,8 @@ import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 import 'package:movie_watchlist/features/watchlist/presentation/providers/watchlist_providers.dart';
 import 'package:movie_watchlist/features/watched/presentation/providers/watched_providers.dart';
+import 'package:movie_watchlist/l10n/app_localizations.dart';
+import 'package:movie_watchlist/core/localization/locale_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -26,6 +28,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final authState = ref.watch(authStateChangesProvider);
     final watchlistAsync = ref.watch(watchlistStreamProvider);
     final watchedAsync = ref.watch(watchedStreamProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return authState.when(
       data: (user) {
@@ -36,7 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Profile'),
+            title: Text(l10n.profile),
             backgroundColor: AppColors.background,
           ),
           body: SingleChildScrollView(
@@ -69,7 +72,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     children: [
                       Expanded(
                         child: _StatCard(
-                          title: 'Watchlist',
+                          title: l10n.watchlist,
                           value: watchlistCount.toString(),
                           icon: Icons.bookmark,
                         ),
@@ -77,7 +80,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatCard(
-                          title: 'Watched',
+                          title: l10n.watched,
                           value: watchedCount.toString(),
                           icon: Icons.visibility,
                         ),
@@ -96,8 +99,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   child: Column(
                     children: [
                       _SettingsTile(
+                        icon: Icons.language,
+                        title: ref.watch(localeProvider).languageCode == 'en' 
+                            ? '${l10n.language} (Eng)' 
+                            : '${l10n.language} (አማርኛ)',
+                        onTap: () => _showLanguageDialog(),
+                      ),
+                      const Divider(height: 1, color: Colors.white10),
+                      _SettingsTile(
                         icon: Icons.logout,
-                        title: 'Logout',
+                        title: l10n.logout,
                         textColor: AppColors.error,
                         onTap: () => _showLogoutDialog(),
                       ),
@@ -124,21 +135,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   void _showLogoutDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Logout', style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: AppColors.textSecondary),
+        title: Text(l10n.logout, style: const TextStyle(color: AppColors.textPrimary)),
+        content: Text(
+          l10n.logoutConfirmation,
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
           ),
           TextButton(
@@ -146,9 +158,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               Navigator.of(ctx).pop();
               ref.read(authRepositoryProvider).signOut();
             },
-            child: const Text('Logout', style: TextStyle(color: AppColors.error)),
+            child: Text(l10n.logout, style: const TextStyle(color: AppColors.error)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLanguageDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = ref.read(localeProvider);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(l10n.selectLanguage, style: const TextStyle(color: AppColors.textPrimary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(l10n.english, style: const TextStyle(color: AppColors.textPrimary)),
+              trailing: currentLocale.languageCode == 'en' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: Text(l10n.amharic, style: const TextStyle(color: AppColors.textPrimary)),
+              trailing: currentLocale.languageCode == 'am' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(const Locale('am'));
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

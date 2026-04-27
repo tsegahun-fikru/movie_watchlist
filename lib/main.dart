@@ -12,6 +12,11 @@ import 'package:movie_watchlist/bootstrap/app_startup.dart';
 // Router
 import 'package:movie_watchlist/app/router/app_router.dart';
 
+// Localization
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:movie_watchlist/l10n/app_localizations.dart';
+import 'package:movie_watchlist/core/localization/locale_provider.dart';
+
 // No global navigator key here anymore, it's in app_router.dart
 
 void main() async {
@@ -68,6 +73,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       scrollBehavior: MyScrollBehavior(),
@@ -75,6 +81,14 @@ class _MyAppState extends ConsumerState<MyApp> {
       title: 'Movie Watchlist',
       theme: AppTheme.darkTheme,
       routerConfig: router,
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
