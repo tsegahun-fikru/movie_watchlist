@@ -1,4 +1,7 @@
 // lib/features/auth/presentation/screens/login_screen.dart
+// Email/password login screen. On success the GoRouter redirect automatically
+// navigates the user to the home screen via the auth state stream.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 
+/// Login screen with email and password fields, form validation, and
+/// Firebase Auth error handling.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -27,10 +32,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  /// Validates the form and calls [AuthRepository.signInWithEmailAndPassword].
+  /// On success, the GoRouter redirect reacts to the auth state change.
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final authRepo = ref.read(authRepositoryProvider);
       await authRepo.signInWithEmailAndPassword(
@@ -40,13 +48,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // On success, RootAuthWrapper will react to the auth state change.
     } on FirebaseAuthException catch (e) {
       final message = _mapAuthError(e.code);
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text(message), backgroundColor: AppColors.error),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
             'An unexpected error occurred. Please try again.',
           ),
           backgroundColor: AppColors.error,
@@ -57,7 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  /// Maps FirebaseAuth error codes to user‑friendly messages.
+  /// Maps FirebaseAuth error codes to user-friendly messages.
   String _mapAuthError(String code) {
     switch (code) {
       case 'user-not-found':
@@ -165,6 +173,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
+                  // Forgot password link
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => context.push('/forgot-password'),
+                      child: const Text(
+                        'Forgot password?',
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                   // Sign In Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _signIn,
@@ -220,6 +241,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  /// Builds a consistent [InputDecoration] for all text fields on this screen.
   InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,

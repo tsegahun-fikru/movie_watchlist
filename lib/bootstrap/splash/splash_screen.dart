@@ -1,9 +1,18 @@
 // lib/bootstrap/splash/splash_screen.dart
+// Branded splash screen shown while Firebase initialises and the auth state
+// is being determined. Displayed for a minimum of 3 seconds.
+
 import 'package:flutter/material.dart';
 import 'package:movie_watchlist/bootstrap/splash/widgets/zigzag_painter.dart';
 import 'package:movie_watchlist/core/constants/constants.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 
+/// Full-screen splash widget with the app branding.
+///
+/// Composed of three visual layers stacked via [Stack]:
+/// 1. A translucent primary-colour circle in the lower half.
+/// 2. A decorative person illustration anchored to the bottom-left.
+/// 3. The "Movie TIME" wordmark at the top and the "Philm" tagline centred.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Background circle
+            // Background circle — decorative glow behind the person asset
             Positioned(
               bottom: 100,
               child: Container(
@@ -30,17 +39,17 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 255,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                 ),
               ),
             ),
-            // Person asset
+            // Person asset — positioned slightly off-screen for a cinematic feel
             Positioned(
               left: -25,
               bottom: -50,
               child: Image.asset(Constants.splashPersonAsset, width: 440),
             ),
-            // "Movie TIME" text
+            // "Movie TIME" wordmark in the top area
             Positioned(
               top: 60,
               child: Column(
@@ -70,6 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
                           ),
                         ),
                         const SizedBox(height: 5),
+                        // Decorative zigzag underline beneath "TIME"
                         SizedBox(
                           width: 70,
                           height: 5,

@@ -1,3 +1,11 @@
+// lib/features/movies/data/repositories/legacy_tmdb_repository.dart
+// Legacy TMDB repository used by home-screen providers, TV search, and the
+// detail screen. Predates the clean-arch movie repository and uses the shared
+// Movie/TvShow models directly instead of domain entities.
+//
+// New features should use the clean-arch path (TmdbRemoteDataSource +
+// MovieRepositoryImpl) via core/di/clean_arch_providers.dart.
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -5,8 +13,10 @@ import 'package:http/http.dart' as http;
 import 'package:movie_watchlist/core/config/api_key.dart';
 import 'package:movie_watchlist/shared/models/movie.dart';
 import 'package:movie_watchlist/shared/models/tv_show.dart';
+import 'package:movie_watchlist/shared/models/tv_episode.dart';
 import 'package:movie_watchlist/shared/models/search_result_item.dart';
 
+/// Thrown when the device has no internet connection.
 class NetworkException implements Exception {
   final String message;
   NetworkException(this.message);
@@ -14,6 +24,7 @@ class NetworkException implements Exception {
   String toString() => 'NetworkException: $message';
 }
 
+/// Thrown when the TMDB API returns a non-200 status code.
 class ApiException implements Exception {
   final int statusCode;
   final String message;
@@ -22,18 +33,25 @@ class ApiException implements Exception {
   String toString() => 'ApiException: $statusCode - $message';
 }
 
+/// Provides all TMDB data access needed by the home screen, detail screen,
+/// TV search, and recommendations feature.
 class LegacyTmdbRepository {
   final http.Client client;
-  
+
   LegacyTmdbRepository({required this.client});
 
   static const String apiKey = tmdbApiKey;
   static const String baseUrl = "https://api.themoviedb.org/3";
   static const String imageBaseUrl = "https://image.tmdb.org/t/p/w500";
 
+  /// In-memory cache for the movie genre map to avoid repeated API calls.
   Map<int, String>? _genreMap;
 
-  // ─── Generic GET helper ───
+  // ─── Generic GET helper ───────────────────────────────────────────────────
+
+  /// Performs a GET request to [endpoint] with optional [queryParams].
+  /// Throws [NetworkException] on connectivity issues and [ApiException] on
+  /// non-200 responses.
   Future<Map<String, dynamic>> _get(
     String endpoint, {
     Map<String, String>? queryParams,
@@ -56,7 +74,9 @@ class LegacyTmdbRepository {
     }
   }
 
-  // ─── List helpers ───
+  // ─── List helpers ─────────────────────────────────────────────────────────
+
+  /// Fetches a list of [Movie] objects from [endpoint].
   Future<List<Movie>> _fetchMovieList(
     String endpoint, {
     Map<String, String>? queryParams,
@@ -68,6 +88,7 @@ class LegacyTmdbRepository {
         .toList();
   }
 
+  /// Fetches a list of [TvShow] objects from [endpoint].
   Future<List<TvShow>> _fetchTvList(
     String endpoint, {
     Map<String, String>? queryParams,
@@ -79,7 +100,8 @@ class LegacyTmdbRepository {
         .toList();
   }
 
-  // ─── Movie fetchers ───
+  // ─── Movie fetchers ───────────────────────────────────────────────────────
+
   Future<List<Movie>> fetchTrendingMovies() => _fetchMovieList('/trending/movie/day');
   Future<List<Movie>> fetchPopularMovies() => _fetchMovieList('/movie/popular');
   Future<List<Movie>> fetchTopRatedMovies() => _fetchMovieList('/movie/top_rated');
@@ -87,6 +109,8 @@ class LegacyTmdbRepository {
   Future<List<Movie>> fetchUpcomingMovies() => _fetchMovieList('/movie/upcoming');
   Future<List<Movie>> searchMovies(String query) =>
       _fetchMovieList('/search/movie', queryParams: {'query': query});
+
+  /// Discovers movies filtered by optional [genreIds] and/or [year].
   Future<List<Movie>> discoverMovies({List<int>? genreIds, int? year}) {
     final params = <String, String>{};
     if (genreIds != null && genreIds.isNotEmpty) {
@@ -98,12 +122,16 @@ class LegacyTmdbRepository {
     return _fetchMovieList('/discover/movie', queryParams: params);
   }
 
-  // ─── TV fetchers ───
+  // ─── TV fetchers ──────────────────────────────────────────────────────────
+
   Future<List<TvShow>> fetchSeries() => _fetchTvList('/tv/popular');
   Future<List<TvShow>> fetchOnTheAirSeries() => _fetchTvList('/tv/on_the_air');
   Future<List<TvShow>> fetchTopRatedSeries() => _fetchTvList('/tv/top_rated');
 
-  // ─── Genre cache ───
+  // ─── Genre cache ──────────────────────────────────────────────────────────
+
+  /// Returns the movie genre map (id → name), fetching from TMDB only once
+  /// per app session and caching the result in memory.
   Future<Map<int, String>> fetchGenres() async {
     if (_genreMap != null) return _genreMap!;
     final data = await _get('/genre/movie/list');
@@ -112,23 +140,30 @@ class LegacyTmdbRepository {
     return _genreMap!;
   }
 
-  // ─── Details ───
+  // ─── Detail endpoints ─────────────────────────────────────────────────────
+
+  /// Fetches basic movie data by ID (no appended responses).
   Future<Movie> getMovieById(int movieId) async {
     final data = await _get('/movie/$movieId');
     return Movie.fromJson(data);
   }
 
+  /// Fetches full movie details including videos and credits.
   Future<Map<String, dynamic>> getMovieDetails(int movieId) => _get(
     '/movie/$movieId',
     queryParams: {'append_to_response': 'videos,credits'},
   );
 
+  /// Fetches full TV show details including videos and credits.
   Future<Map<String, dynamic>> getTvDetails(int seriesId) => _get(
     '/tv/$seriesId',
     queryParams: {'append_to_response': 'videos,credits'},
   );
 
-  // ─── Trailer helpers ───
+  // ─── Trailer helpers ──────────────────────────────────────────────────────
+
+  /// Returns the YouTube key of the first official trailer for a movie,
+  /// or `null` if none is found or the request fails.
   Future<String?> getMovieTrailerKey(int movieId) async {
     try {
       final data = await _get('/movie/$movieId/videos');
@@ -139,6 +174,8 @@ class LegacyTmdbRepository {
     }
   }
 
+  /// Returns the YouTube key of the first official trailer for a TV show,
+  /// or `null` if none is found or the request fails.
   Future<String?> getTvTrailerKey(int seriesId) async {
     try {
       final data = await _get('/tv/$seriesId/videos');
@@ -149,6 +186,7 @@ class LegacyTmdbRepository {
     }
   }
 
+  /// Scans the videos results array for the first YouTube Trailer entry.
   String? _extractTrailerKey(Map<String, dynamic> data) {
     final results = data['results'] as List<dynamic>? ?? [];
     for (final video in results) {
@@ -159,7 +197,10 @@ class LegacyTmdbRepository {
     return null;
   }
 
-  // ─── Watch providers ───
+  // ─── Watch providers ──────────────────────────────────────────────────────
+
+  /// Returns the list of streaming providers for a movie in [region].
+  /// Each entry has `name` and `logo` keys.
   Future<List<Map<String, dynamic>>> getMovieWatchProviders(
     int movieId,
     String region,
@@ -167,6 +208,7 @@ class LegacyTmdbRepository {
     return _fetchWatchProviders('/movie/$movieId/watch/providers', region);
   }
 
+  /// Returns the list of streaming providers for a TV show in [region].
   Future<List<Map<String, dynamic>>> getTvWatchProviders(
     int seriesId,
     String region,
@@ -174,6 +216,8 @@ class LegacyTmdbRepository {
     return _fetchWatchProviders('/tv/$seriesId/watch/providers', region);
   }
 
+  /// Internal helper that extracts the flatrate (subscription) providers for
+  /// the given [region] from the TMDB watch/providers response.
   Future<List<Map<String, dynamic>>> _fetchWatchProviders(
     String endpoint,
     String region,
@@ -193,7 +237,74 @@ class LegacyTmdbRepository {
         .toList();
   }
 
-  // ─── Multi search (movies + TV) ───
+  // ─── Season details ───────────────────────────────────────────────────────
+
+  /// Fetches all episodes for a specific season of a TV show.
+  Future<List<TvEpisode>> getSeasonEpisodes(int seriesId, int seasonNumber) async {
+    final data = await _get('/tv/$seriesId/season/$seasonNumber');
+    final episodes = data['episodes'] as List<dynamic>? ?? [];
+    return episodes
+        .map((e) => TvEpisode.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ─── Similar content ──────────────────────────────────────────────────────
+
+  Future<List<Movie>> getSimilarMovies(int movieId) =>
+      _fetchMovieList('/movie/$movieId/similar');
+
+  Future<List<TvShow>> getSimilarTvShows(int seriesId) =>
+      _fetchTvList('/tv/$seriesId/similar');
+
+  // ─── Person movies ────────────────────────────────────────────────────────
+
+  /// Searches for a person by [name] and returns their movie credits sorted
+  /// by rating descending. Only movies with a poster are included.
+  Future<List<Movie>> searchPersonMovies(String name) async {
+    final data = await _get('/search/person', queryParams: {'query': name});
+    final results = data['results'] as List? ?? [];
+    if (results.isEmpty) return [];
+    final personId = results.first['id'] as int;
+    final credits = await _get('/person/$personId/movie_credits');
+    final cast = credits['cast'] as List? ?? [];
+    return cast
+        .map((j) => Movie.fromJson(j as Map<String, dynamic>))
+        .where((m) => m.posterPath.isNotEmpty)
+        .toList()
+      ..sort((a, b) => b.voteAverage.compareTo(a.voteAverage));
+  }
+
+  // ─── TV search ────────────────────────────────────────────────────────────
+
+  Future<List<TvShow>> searchTvShows(String query, {int page = 1}) =>
+      _fetchTvList('/search/tv',
+          queryParams: {'query': query, 'page': page.toString()});
+
+  /// Discovers TV shows with optional server-side filters.
+  Future<List<TvShow>> discoverTvShows({
+    int page = 1,
+    int? genreId,
+    int? year,
+    double? minimumRating,
+  }) {
+    final params = <String, String>{'page': page.toString()};
+    if (genreId != null) params['with_genres'] = '$genreId';
+    if (year != null) params['first_air_date_year'] = '$year';
+    if (minimumRating != null) params['vote_average.gte'] = '$minimumRating';
+    return _fetchTvList('/discover/tv', queryParams: params);
+  }
+
+  /// Returns the TV genre map (id → name).
+  Future<Map<int, String>> fetchTvGenres() async {
+    final data = await _get('/genre/tv/list');
+    final genres = data['genres'] as List<dynamic>;
+    return {for (var g in genres) g['id'] as int: g['name'] as String};
+  }
+
+  // ─── Multi search (movies + TV) ───────────────────────────────────────────
+
+  /// Searches across both movies and TV shows using the TMDB multi-search
+  /// endpoint and returns a normalised list of [SearchResultItem]s.
   Future<List<SearchResultItem>> searchMulti(String query) async {
     final data = await _get('/search/multi', queryParams: {'query': query});
 

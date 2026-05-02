@@ -1,3 +1,7 @@
+// lib/features/movies/presentation/widgets/movie_search_result_list.dart
+// Scrollable list of movie search results with skeleton loading, error, and
+// empty states. Supports infinite scroll via an external [ScrollController].
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +11,10 @@ import 'package:movie_watchlist/core/di/clean_arch_providers.dart';
 import 'package:movie_watchlist/features/movies/domain/entities/movie.dart';
 import 'package:movie_watchlist/shared/models/movie.dart' as legacy;
 
+/// Renders the list of movies from [movieSearchNotifierProvider].
+///
+/// [scrollController] is provided by the parent so it can detect when the
+/// user is near the bottom and trigger [loadNextPage].
 class MovieSearchResultList extends ConsumerWidget {
   const MovieSearchResultList({super.key, required this.scrollController});
 
@@ -27,6 +35,7 @@ class MovieSearchResultList extends ConsumerWidget {
       movieSearchNotifierProvider.select((state) => state.error),
     );
 
+    // Show skeleton tiles during the initial load
     if (isLoading && results.isEmpty) {
       return ListView.separated(
         controller: scrollController,
@@ -63,6 +72,7 @@ class MovieSearchResultList extends ConsumerWidget {
       itemCount: results.length + (isLoadingMore ? 1 : 0),
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
+        // Show a spinner at the bottom while loading the next page
         if (index >= results.length) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -77,6 +87,11 @@ class MovieSearchResultList extends ConsumerWidget {
   }
 }
 
+/// A single row tile for a movie search result.
+///
+/// Converts the clean-arch [Movie] entity to the shared [legacy.Movie] model
+/// before navigating to the detail screen, since [DetailScreen] expects the
+/// shared model.
 class _MovieSearchTile extends StatelessWidget {
   const _MovieSearchTile({required this.movie});
 
@@ -91,6 +106,7 @@ class _MovieSearchTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
+        // Map the clean-arch entity back to the shared legacy model for navigation
         context.push(
           '/details',
           extra: legacy.Movie(
@@ -118,6 +134,7 @@ class _MovieSearchTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // Poster thumbnail
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
@@ -139,6 +156,7 @@ class _MovieSearchTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
+            // Movie info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +183,7 @@ class _MovieSearchTile extends StatelessWidget {
                         : movie.overview,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppColors.textTertiary.withOpacity(0.85), height: 1.4),
+                    style: TextStyle(color: AppColors.textTertiary.withValues(alpha: 0.85), height: 1.4),
                   ),
                 ],
               ),
@@ -177,6 +195,7 @@ class _MovieSearchTile extends StatelessWidget {
   }
 }
 
+/// Placeholder tile shown while the initial search results are loading.
 class _SkeletonTile extends StatelessWidget {
   const _SkeletonTile();
 

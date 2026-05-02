@@ -1,4 +1,7 @@
 // lib/core/widgets/buttons/watchlist_button.dart
+// Reusable icon button that toggles a Movie or TvShow in/out of the watchlist.
+// Works for both content types via the shared [WatchlistService].
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
@@ -7,6 +10,11 @@ import 'package:movie_watchlist/shared/models/movie.dart';
 import 'package:movie_watchlist/shared/models/tv_show.dart';
 import 'package:movie_watchlist/features/notifications/data/services/notification_service.dart';
 
+/// A heart-shaped icon button that adds or removes [item] from the watchlist.
+///
+/// [item] must be either a [Movie] or a [TvShow]. The button checks the
+/// current watchlist state on mount and reflects it immediately.
+/// A local notification is fired after each successful toggle.
 class WatchlistButton extends ConsumerStatefulWidget {
   final Object item; // can be Movie or TvShow
   const WatchlistButton({super.key, required this.item});
@@ -25,6 +33,7 @@ class _WatchlistButtonState extends ConsumerState<WatchlistButton> {
     _checkWatchlist();
   }
 
+  /// Queries [WatchlistService] to determine the initial saved state.
   Future<void> _checkWatchlist() async {
     final service = ref.read(watchlistServiceProvider);
     if (service == null) return;
@@ -32,6 +41,7 @@ class _WatchlistButtonState extends ConsumerState<WatchlistButton> {
     if (mounted) setState(() => isSaved = exists);
   }
 
+  /// Adds or removes the item from the watchlist and fires a local notification.
   Future<void> toggleWatchlist() async {
     final service = ref.read(watchlistServiceProvider);
     if (service == null) return;

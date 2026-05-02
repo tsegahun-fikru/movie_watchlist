@@ -1,8 +1,15 @@
+// lib/features/watchlist/presentation/widgets/watchlist_card.dart
+// Card widget used in the watchlist grid. Displays the movie poster and title.
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/shared/models/movie.dart';
 
+/// A grid card that shows a [Movie]'s poster and title.
+///
+/// Used inside the watchlist screen's [GridView]. Navigation to the detail
+/// screen is handled by the parent [GestureDetector] in [WatchlistScreen].
 class WatchlistCard extends StatelessWidget {
   final Movie movie;
 
@@ -18,7 +25,7 @@ class WatchlistCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // Poster
+          // Poster — fills the available space above the title
           Expanded(
             child: movie.posterUrl.isNotEmpty
                 ? CachedNetworkImage(
@@ -55,6 +62,7 @@ class WatchlistCard extends StatelessWidget {
     );
   }
 
+  /// Fallback widget shown when the poster URL is empty or fails to load.
   Widget _noImagePlaceholder() {
     return Container(
       color: AppColors.surfaceLight,

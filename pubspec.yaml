@@ -1,5 +1,5 @@
 name: movie_watchlist
-description: "A new Flutter project."
+description: "A movie discovery and watchlist app built with Flutter and Firebase."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -35,6 +35,7 @@ dependencies:
   firebase_messaging: ^15.2.10   
   go_router: ^17.2.2
   youtube_player_flutter: ^9.1.3
+  share_plus: ^10.0.0
 
 dev_dependencies:
   flutter_test:

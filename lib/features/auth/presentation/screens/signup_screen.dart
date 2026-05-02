@@ -1,4 +1,7 @@
 // lib/features/auth/presentation/screens/signup_screen.dart
+// New account registration screen with email, password, and confirm-password
+// fields. On success the GoRouter redirect navigates to the home screen.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 
+/// Registration screen with email, password, and confirm-password fields.
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
@@ -30,10 +34,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     super.dispose();
   }
 
+  /// Validates the form and calls [AuthRepository.signUpWithEmailAndPassword].
+  /// On success, the GoRouter redirect reacts to the auth state change.
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
@@ -51,11 +58,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       } else if (e.code == 'weak-password') {
         message = 'Password is too weak. Use a stronger password.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text(message), backgroundColor: AppColors.error),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
           backgroundColor: AppColors.error,
@@ -241,6 +248,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
+  /// Builds a consistent [InputDecoration] for all text fields on this screen.
   InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,

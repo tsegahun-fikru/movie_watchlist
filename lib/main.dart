@@ -1,3 +1,7 @@
+// lib/main.dart
+// App entry point: initialises Firebase, wraps the widget tree in ProviderScope,
+// and mounts MyApp which wires up routing, theming, and localisation.
+
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -25,7 +29,8 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-// ... MyScrollBehavior unchanged ...
+/// Custom scroll behaviour that uses [ClampingScrollPhysics] and removes
+/// the default overscroll glow/stretch effect on all platforms.
 class MyScrollBehavior extends MaterialScrollBehavior {
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) {
@@ -42,6 +47,13 @@ class MyScrollBehavior extends MaterialScrollBehavior {
   }
 }
 
+/// Root widget of the application.
+///
+/// Responsible for:
+/// - Initialising [AppStartupController] (notifications, deep links)
+/// - Starting the 3-second splash timer via [splashElapsedProvider]
+/// - Building [MaterialApp.router] with the GoRouter, dark theme, and
+///   localisation delegates.
 class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
   @override
@@ -56,7 +68,9 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     _startupController = AppStartupController();
     _startupController.initialize();
-    
+
+    // Flip splashElapsedProvider after 3 s so the router can redirect away
+    // from the splash screen once both the timer and auth state are ready.
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
         ref.read(splashElapsedProvider.notifier).state = true;

@@ -1,6 +1,15 @@
+// lib/features/movies/presentation/state/movie_search_state.dart
+// Immutable state class for the movie search notifier.
+
 import 'package:movie_watchlist/features/movies/domain/entities/movie.dart';
 import 'package:movie_watchlist/features/movies/domain/entities/movie_filters.dart';
 
+/// Holds the complete state of the movie search screen.
+///
+/// [results] accumulates across pages for infinite scroll.
+/// [isLoading] is true during the initial/reset load.
+/// [isLoadingMore] is true when appending the next page.
+/// [hasMore] becomes false when TMDB reports no further pages.
 class MovieSearchState {
   const MovieSearchState({
     required this.query,
@@ -35,6 +44,8 @@ class MovieSearchState {
   final int currentPage;
   final bool hasMore;
 
+  /// Returns a copy of this state with the provided fields overridden.
+  /// [clearError] can be set to `true` to explicitly null out [error].
   MovieSearchState copyWith({
     String? query,
     MovieFilters? filters,

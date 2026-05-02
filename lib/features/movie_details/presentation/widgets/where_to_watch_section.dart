@@ -1,7 +1,16 @@
+// lib/features/movie_details/presentation/widgets/where_to_watch_section.dart
+// Displays streaming provider logos for the current region on the detail screen.
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 
+/// Shows a horizontal row of streaming provider logos fetched from TMDB.
+///
+/// [providersFuture] should be the result of
+/// [LegacyTmdbRepository.getMovieWatchProviders] or
+/// [LegacyTmdbRepository.getTvWatchProviders] for the user's region.
+/// The section is hidden when no providers are available.
 class WhereToWatchSection extends StatelessWidget {
   final Future<List<Map<String, dynamic>>> providersFuture;
 
@@ -49,6 +58,7 @@ class WhereToWatchSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+            // Horizontally scrollable row of provider logos
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16.0),

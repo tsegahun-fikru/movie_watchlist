@@ -1,5 +1,15 @@
+// lib/shared/models/movie.dart
+// Shared Movie model used across features (home, search, watchlist, details).
+// Parsed from TMDB JSON responses; supports both list endpoints (genre_ids)
+// and detail endpoints (genres, videos, credits).
+
 import 'package:movie_watchlist/shared/models/cast_members.dart';
 
+/// Represents a movie from the TMDB API.
+///
+/// Fields like [genres], [trailerKey], and [cast] are only populated when
+/// the detail endpoint (`/movie/{id}?append_to_response=videos,credits`) is
+/// used. List endpoints populate [genreIds] instead.
 class Movie {
   final int id;
   final String title;
@@ -10,13 +20,24 @@ class Movie {
   final double voteAverage;
   final int voteCount;
   final String overview;
+
+  /// Genre IDs from list endpoints (e.g. /movie/popular).
   final List<int> genreIds;
   final double popularity;
   final String originalLanguage;
-  // new fields
-  final int runtime; // in minutes
-  final List<String> genres; // genre names
-  final String? trailerKey; // YouTube trailer key
+
+  /// Runtime in minutes. Only available from the detail endpoint.
+  final int runtime;
+
+  /// Human-readable genre names. Only available from the detail endpoint.
+  final List<String> genres;
+
+  /// YouTube video key for the official trailer. Only available from the
+  /// detail endpoint when `append_to_response=videos` is used.
+  final String? trailerKey;
+
+  /// Top-billed cast members. Only available from the detail endpoint when
+  /// `append_to_response=credits` is used.
   final List<CastMember> cast;
 
   Movie({
@@ -38,20 +59,26 @@ class Movie {
     this.cast = const [],
   });
 
+  /// Full TMDB poster URL at w500 resolution. Empty string if no path.
   String get posterUrl =>
       posterPath.isNotEmpty ? 'https://image.tmdb.org/t/p/w500$posterPath' : '';
 
+  /// Full TMDB backdrop URL at w780 resolution. Empty string if no path.
   String get backdropUrl => backdropPath.isNotEmpty
       ? 'https://image.tmdb.org/t/p/w780$backdropPath'
       : '';
 
+  /// Parses a [Movie] from a TMDB JSON map.
+  ///
+  /// Handles both list-endpoint responses (no genres/videos/credits) and
+  /// detail-endpoint responses (with appended data).
   factory Movie.fromJson(Map<String, dynamic> json) {
-    // Parse genres
+    // Parse genre names from the detail endpoint's genres array
     final List<String> genres =
         (json['genres'] as List?)?.map((g) => g['name'] as String).toList() ??
         [];
 
-    // Parse videos
+    // Extract the first YouTube trailer key from the videos array
     final videos = json['videos']?['results'] as List?;
     String? trailerKey;
     if (videos != null) {
@@ -63,7 +90,7 @@ class Movie {
       }
     }
 
-    // Parse cast
+    // Parse cast members from the credits array
     final credits = json['credits']?['cast'] as List?;
     final List<CastMember> cast =
         credits
@@ -71,6 +98,7 @@ class Movie {
               (c) => CastMember(
                 name: c['name'] ?? '',
                 profilePath: c['profile_path'],
+                character: c['character'] ?? '',
               ),
             )
             .toList() ??

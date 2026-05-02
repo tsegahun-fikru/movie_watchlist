@@ -1,7 +1,14 @@
+// lib/core/theme/app_theme.dart
+// Defines the single dark [ThemeData] used throughout the app.
+// All colour references delegate to [AppColors] so the palette can be
+// updated in one place.
+
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
+/// Provides the app's dark theme via [AppTheme.darkTheme].
 class AppTheme {
+  /// The app's only theme — a fully dark Material 3-compatible theme.
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
@@ -48,6 +55,15 @@ class AppTheme {
       ),
       dialogTheme: const DialogThemeData(
         backgroundColor: AppColors.surface,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
     );
   }

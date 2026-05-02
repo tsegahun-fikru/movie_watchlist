@@ -1,7 +1,15 @@
+// lib/features/movies/presentation/widgets/movie_search_filter_bar.dart
+// Filter bar widget for the movie search screen. Renders horizontally
+// scrollable chip rows for genre, release year, and minimum rating.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/di/clean_arch_providers.dart';
 
+/// Renders three rows of [FilterChip]s for genre, year, and minimum rating.
+///
+/// Each chip toggles the corresponding filter on [MovieSearchNotifier].
+/// Tapping an already-selected chip deselects it (sets the filter to null).
 class MovieSearchFilterBar extends ConsumerWidget {
   const MovieSearchFilterBar({super.key});
 
@@ -11,12 +19,14 @@ class MovieSearchFilterBar extends ConsumerWidget {
       movieSearchNotifierProvider.select((state) => state.filters),
     );
     final currentYear = DateTime.now().year;
+    // Show the last 21 years (current year down to current - 20)
     final years = List<int>.generate(21, (index) => currentYear - index);
     const ratings = <double>[9, 8, 7, 6, 5];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        // ── Genre chips ──
         ref
             .watch(movieGenresProvider)
             .when(
@@ -35,6 +45,7 @@ class MovieSearchFilterBar extends ConsumerWidget {
                       label: Text(genre.name),
                       selected: isSelected,
                       onSelected: (_) {
+                        // Toggle: deselect if already selected
                         ref
                             .read(movieSearchNotifierProvider.notifier)
                             .updateGenre(isSelected ? null : genre.id);
@@ -50,6 +61,8 @@ class MovieSearchFilterBar extends ConsumerWidget {
               error: (error, stackTrace) => const SizedBox.shrink(),
             ),
         const SizedBox(height: 12),
+
+        // ── Year chips ──
         SizedBox(
           height: 46,
           child: ListView.separated(
@@ -73,6 +86,8 @@ class MovieSearchFilterBar extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
+
+        // ── Minimum rating chips + clear button ──
         SizedBox(
           height: 46,
           child: ListView.separated(
@@ -80,6 +95,7 @@ class MovieSearchFilterBar extends ConsumerWidget {
             itemCount: ratings.length + 1,
             separatorBuilder: (context, index) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
+              // Last item is the "Clear filters" action chip
               if (index == ratings.length) {
                 return ActionChip(
                   label: const Text('Clear filters'),

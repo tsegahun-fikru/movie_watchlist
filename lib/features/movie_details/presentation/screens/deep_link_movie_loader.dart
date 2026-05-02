@@ -1,4 +1,7 @@
 // lib/features/movie_details/presentation/screens/deep_link_movie_loader.dart
+// Intermediate screen that fetches a movie by ID before showing the detail
+// screen. Used by the `/movie/:id` deep-link route.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
@@ -6,6 +9,10 @@ import 'package:movie_watchlist/shared/models/movie.dart';
 import 'package:movie_watchlist/features/movies/presentation/providers/movie_providers.dart';
 import 'package:movie_watchlist/features/movie_details/presentation/screens/details_screen.dart';
 
+/// Fetches a [Movie] by [movieId] and renders [DetailScreen] once loaded.
+///
+/// Shows a loading spinner while the request is in flight and an error
+/// message if the movie cannot be found.
 class DeepLinkMovieLoader extends ConsumerWidget {
   final int movieId;
   const DeepLinkMovieLoader({super.key, required this.movieId});

@@ -1,6 +1,15 @@
+// lib/features/home/presentation/widgets/auto_carousel.dart
+// Auto-advancing PageView carousel used for the trending movies banner on the
+// home screen. Advances every 5 seconds and supports manual prev/next buttons.
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+/// A [PageView]-based carousel that automatically advances every 5 seconds.
+///
+/// [items] is the list of data objects to display.
+/// [itemBuilder] converts each item into a widget.
+/// [showNavigation] toggles the left/right arrow buttons (default: true).
 class AutoCarousel extends StatefulWidget {
   final List<dynamic> items;
   final Widget Function(BuildContext, dynamic) itemBuilder;
@@ -27,6 +36,7 @@ class _AutoCarouselState extends State<AutoCarousel> {
 
     _pageController = PageController();
 
+    // Auto-advance to the next page every 5 seconds; wraps around to page 0
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (_pageController.hasClients && widget.items.isNotEmpty) {
         int nextPage = (_pageController.page?.toInt() ?? 0) + 1;
@@ -77,7 +87,7 @@ class _AutoCarouselState extends State<AutoCarousel> {
               widget.itemBuilder(context, widget.items[index]),
         ),
 
-        // LEFT BUTTON
+        // Left navigation arrow
         if (widget.showNavigation)
           Positioned(
             left: 10,
@@ -91,7 +101,7 @@ class _AutoCarouselState extends State<AutoCarousel> {
             ),
           ),
 
-        // RIGHT BUTTON
+        // Right navigation arrow
         if (widget.showNavigation)
           Positioned(
             right: 10,

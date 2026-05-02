@@ -1,7 +1,16 @@
 // lib/core/widgets/shimmer_loading.dart
+// Lightweight shimmer animation widget used by skeleton placeholders.
+// Implemented with a [ShaderMask] + [LinearGradient] sweep so it works
+// without any third-party shimmer package.
+
 import 'package:flutter/material.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 
+/// Wraps [child] in a repeating left-to-right shimmer gradient animation.
+///
+/// The gradient sweeps from [AppColors.surfaceLight] through
+/// [AppColors.shimmerHighlight] and back, creating the classic loading effect.
+/// [period] controls the speed of one full sweep (default 1500 ms).
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
   final Duration period;
@@ -22,6 +31,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
   @override
   void initState() {
     super.initState();
+    // Repeat indefinitely until the widget is disposed
     _controller = AnimationController(vsync: this, duration: widget.period)
       ..repeat();
   }
@@ -40,6 +50,8 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
         return ShaderMask(
           blendMode: BlendMode.srcATop,
           shaderCallback: (bounds) {
+            // Shift the gradient start/end positions based on the animation value
+            // so the highlight sweeps from left to right across the widget.
             return LinearGradient(
               begin: Alignment(-1.0 + _controller.value * 2, 0),
               end: Alignment(1.0 + _controller.value * 2, 0),

@@ -1,5 +1,14 @@
+// lib/shared/models/tv_show.dart
+// Shared TvShow model used across features (home, search, watchlist, details).
+// Mirrors the structure of [Movie] but adapted for TV-specific TMDB fields.
+
 import 'package:movie_watchlist/shared/models/cast_members.dart';
 
+/// Represents a TV show from the TMDB API.
+///
+/// Like [Movie], fields such as [genres], [trailerKey], [cast], and
+/// [numberOfSeasons] are only populated when the detail endpoint is used
+/// (`/tv/{id}?append_to_response=videos,credits`).
 class TvShow {
   final int id;
   final String name;
@@ -10,15 +19,26 @@ class TvShow {
   final double voteAverage;
   final int voteCount;
   final String overview;
+
+  /// Genre IDs from list endpoints (e.g. /tv/popular).
   final List<int> genreIds;
   final double popularity;
   final String originalLanguage;
   final List<String> originCountry;
-  // new fields
-  final List<int> episodeRunTime; // episode lengths (usually one element)
+
+  /// Typical episode lengths in minutes (usually one element). Only from detail endpoint.
+  final List<int> episodeRunTime;
+
+  /// Total number of seasons. Only from detail endpoint.
   final int numberOfSeasons;
+
+  /// Human-readable genre names. Only from detail endpoint.
   final List<String> genres;
+
+  /// YouTube video key for the official trailer. Only from detail endpoint.
   final String? trailerKey;
+
+  /// Top-billed cast members. Only from detail endpoint.
   final List<CastMember> cast;
 
   TvShow({
@@ -42,17 +62,25 @@ class TvShow {
     this.cast = const [],
   });
 
+  /// Full TMDB poster URL at w500 resolution. Empty string if no path.
   String get fullPosterUrl =>
       posterPath.isNotEmpty ? 'https://image.tmdb.org/t/p/w500$posterPath' : '';
+
+  /// Full TMDB backdrop URL at w780 resolution. Empty string if no path.
   String get fullBackdropUrl => backdropPath.isNotEmpty
       ? 'https://image.tmdb.org/t/p/w780$backdropPath'
       : '';
 
+  /// Parses a [TvShow] from a TMDB JSON map.
+  ///
+  /// Handles both list-endpoint responses and detail-endpoint responses
+  /// (with appended videos and credits).
   factory TvShow.fromJson(Map<String, dynamic> json) {
     final List<String> genres =
         (json['genres'] as List?)?.map((g) => g['name'] as String).toList() ??
         [];
 
+    // Extract the first YouTube trailer key from the videos array
     final videos = json['videos']?['results'] as List?;
     String? trailerKey;
     if (videos != null) {
@@ -64,6 +92,7 @@ class TvShow {
       }
     }
 
+    // Parse cast members from the credits array
     final credits = json['credits']?['cast'] as List?;
     final List<CastMember> cast =
         credits
@@ -71,6 +100,7 @@ class TvShow {
               (c) => CastMember(
                 name: c['name'] ?? '',
                 profilePath: c['profile_path'],
+                character: c['character'] ?? '',
               ),
             )
             .toList() ??
