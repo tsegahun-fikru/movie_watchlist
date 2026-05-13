@@ -1,7 +1,9 @@
-// Version 1: Basic UI Structure - No Firebase Integration
-// This is a simple login screen with hardcoded UI elements
+// lib/features/auth/presentation/screens/login_screen.dart
+// VERSION 1 - Basic UI only. No Firebase. No Riverpod.
+// Uses a simple ChangeNotifier for state.
 
 import 'package:flutter/material.dart';
+import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +15,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _authNotifier = AuthNotifier();
+  String? _error;
 
   @override
   void dispose() {
@@ -22,21 +25,32 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _signIn() {
-    // TODO: Add Firebase authentication in Version 2
-    print('Sign in button pressed');
-    print('Email: ${_emailController.text}');
-    
-    // Show a simple snackbar for now
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Login functionality coming in Version 2!')),
+  Future<void> _signIn() async {
+    setState(() => _error = null);
+
+    // Basic validation
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() => _error = 'Please fill in all fields');
+      return;
+    }
+
+    final success = await _authNotifier.signIn(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
     );
+
+    if (success && mounted) {
+      // TODO v2: Replace with GoRouter navigation
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      setState(() => _error = 'Login failed. Please try again.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0D0D),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -46,10 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo
-                const Icon(Icons.movie, size: 80, color: Color(0xFFE50914)),
+                const Icon(Icons.movie, size: 80, color: Colors.red),
                 const SizedBox(height: 16),
-                
-                // Title
                 const Text(
                   'Welcome Back',
                   textAlign: TextAlign.center,
@@ -67,84 +79,82 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // Email Field
+                // Email field
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Email',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                    hintStyle: TextStyle(color: Colors.grey),
+                    prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
                     filled: true,
-                    fillColor: const Color(0xFF1A1A1A),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
+                    fillColor: Color(0xFF1E1E1E),
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Password Field
+                // Password field
                 TextField(
                   controller: _passwordController,
-                  obscureText: _obscurePassword,
+                  obscureText: true,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Password',
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Colors.grey),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
+                    hintStyle: TextStyle(color: Colors.grey),
+                    prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey),
                     filled: true,
-                    fillColor: const Color(0xFF1A1A1A),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
+                    fillColor: Color(0xFF1E1E1E),
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
 
-                // Forgot Password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      print('Forgot password tapped');
-                    },
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(color: Color(0xFFE50914)),
-                    ),
+                // Error message
+                if (_error != null)
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
+                    textAlign: TextAlign.center,
                   ),
+                const SizedBox(height: 16),
+
+                // Sign In button
+                ListenableBuilder(
+                  listenable: _authNotifier,
+                  builder: (context, _) {
+                    return ElevatedButton(
+                      onPressed: _authNotifier.isLoading ? null : _signIn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: _authNotifier.isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Sign In',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
 
-                // Sign In Button
-                ElevatedButton(
-                  onPressed: _signIn,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE50914),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Sign In',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Sign Up Link
+                // Go to Sign Up
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -153,13 +163,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        print('Navigate to signup');
-                      },
+                      // TODO v2: Replace with GoRouter context.go('/signup')
+                      onTap: () => Navigator.pushNamed(context, '/signup'),
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(
-                          color: Color(0xFFE50914),
+                          color: Colors.red,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

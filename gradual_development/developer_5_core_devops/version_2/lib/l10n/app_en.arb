@@ -1,0 +1,10 @@
+{
+  "@@locale": "en",
+  "appTitle": "Movie Watchlist",
+  "home": "Home",
+  "watchlist": "Watchlist",
+  "watched": "Watched",
+  "search": "Search",
+  "filter": "Filter",
+  "sort": "Sort"
+}

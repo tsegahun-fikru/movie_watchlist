@@ -1,24 +1,31 @@
-// Version 1: Basic Structure - Mock Service
-// No Firestore implementation yet
+// lib/core/firestore/firestore_service.dart
+// VERSION 1 - No Firebase. Returns hardcoded mock data.
 
-/// Mock Firestore service for Version 1
-/// This will be replaced with real Firestore in Version 3
+/// Mock Firestore service - returns hardcoded data, no real database.
 class FirestoreService {
-  /// Mock method to simulate getting watchlist collection
-  dynamic getWatchlistCollection() {
-    print('Mock: Getting watchlist collection');
-    return null;
+  // Hardcoded mock watchlist
+  final List<Map<String, dynamic>> _mockWatchlist = [
+    {'movieId': '1', 'title': 'Inception', 'addedAt': '2024-01-01'},
+    {'movieId': '2', 'title': 'The Dark Knight', 'addedAt': '2024-01-02'},
+  ];
+
+  /// Returns mock watchlist data.
+  /// TODO v2: Replace with real Firestore collection
+  List<Map<String, dynamic>> getWatchlist() {
+    return _mockWatchlist;
   }
 
-  /// Mock method to add to watchlist
+  /// Adds a movie to the mock watchlist.
+  /// TODO v2: Replace with Firestore .set()
   Future<void> addToWatchlist(int movieId, Map<String, dynamic> data) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    print('Mock: Added movie $movieId to watchlist');
+    await Future.delayed(const Duration(milliseconds: 300));
+    _mockWatchlist.add({'movieId': movieId.toString(), ...data});
   }
 
-  /// Mock method to remove from watchlist
+  /// Removes a movie from the mock watchlist.
+  /// TODO v2: Replace with Firestore .delete()
   Future<void> removeFromWatchlist(int movieId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    print('Mock: Removed movie $movieId from watchlist');
+    await Future.delayed(const Duration(milliseconds: 300));
+    _mockWatchlist.removeWhere((item) => item['movieId'] == movieId.toString());
   }
 }
