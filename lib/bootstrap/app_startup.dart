@@ -4,18 +4,26 @@
 
 import 'package:movie_watchlist/features/notifications/data/services/notification_service.dart';
 import 'package:movie_watchlist/app/router/app_router.dart';
+import 'package:movie_watchlist/features/notifications/domain/entities/app_notification.dart';
 
 /// Coordinates startup tasks that should run once when the app launches.
 ///
 /// Call [initialize] from [MyApp.initState] and [dispose] from
 /// [MyApp.dispose] to properly manage any resources.
 class AppStartupController {
-  AppStartupController();
+  AppStartupController({
+    required void Function(AppNotification notification) onNotificationReceived,
+  }) : _onNotificationReceived = onNotificationReceived;
+
+  final void Function(AppNotification notification) _onNotificationReceived;
 
   /// Initialises Firebase Messaging and registers notification handlers.
   /// Uses [rootNavigatorKey] so that notification taps can trigger navigation.
   void initialize() {
-    NotificationService.initialise(navigatorKey: rootNavigatorKey);
+    NotificationService.initialise(
+      navigatorKey: rootNavigatorKey,
+      onNotificationReceived: _onNotificationReceived,
+    );
   }
 
   void dispose() {}

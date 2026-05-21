@@ -5,8 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
+import 'package:movie_watchlist/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:movie_watchlist/features/watched/presentation/providers/watched_providers.dart';
-import 'package:movie_watchlist/features/notifications/data/services/notification_service.dart';
 import 'package:movie_watchlist/shared/models/movie.dart';
 import 'package:movie_watchlist/shared/models/tv_show.dart';
 
@@ -35,27 +35,33 @@ class WatchedButton extends ConsumerWidget {
     final isLoading = watchedAsync.isLoading;
 
     Future<void> toggleWatched() async {
-      final title = (item is Movie) ? (item as Movie).title : (item as TvShow).name;
+      final title = (item is Movie)
+          ? (item as Movie).title
+          : (item as TvShow).name;
 
       try {
         if (isWatched) {
           await service.removeItem(item);
-          NotificationService.addNotification(
-            'Marked as Unwatched',
-            '$title was removed from your watched list.',
-          );
+          ref
+              .read(notificationNotifierProvider.notifier)
+              .addNotification(
+                'Marked as Unwatched',
+                '$title was removed from your watched list.',
+              );
         } else {
           await service.addItem(item);
-          NotificationService.addNotification(
-            'Marked as Watched',
-            '$title was added to your watched list.',
-          );
+          ref
+              .read(notificationNotifierProvider.notifier)
+              .addNotification(
+                'Marked as Watched',
+                '$title was added to your watched list.',
+              );
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: $e')));
         }
       }
     }
@@ -75,7 +81,9 @@ class WatchedButton extends ConsumerWidget {
                 )
               : Icon(
                   isWatched ? Icons.visibility : Icons.visibility_outlined,
-                  color: isWatched ? AppColors.primary : AppColors.textSecondary,
+                  color: isWatched
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   size: 28,
                 ),
           onPressed: isLoading ? null : toggleWatched,

@@ -12,6 +12,7 @@ import 'package:movie_watchlist/core/theme/app_theme.dart';
 
 // Deep link service and startup
 import 'package:movie_watchlist/bootstrap/app_startup.dart';
+import 'package:movie_watchlist/features/notifications/presentation/providers/notification_providers.dart';
 
 // Router
 import 'package:movie_watchlist/app/router/app_router.dart';
@@ -66,7 +67,11 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    _startupController = AppStartupController();
+    _startupController = AppStartupController(
+      onNotificationReceived: ref
+          .read(notificationNotifierProvider.notifier)
+          .add,
+    );
     _startupController.initialize();
 
     // Flip splashElapsedProvider after 3 s so the router can redirect away

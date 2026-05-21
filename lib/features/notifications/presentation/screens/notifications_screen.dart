@@ -1,36 +1,37 @@
 // lib/features/notifications/presentation/screens/notifications_screen.dart
-// Displays the in-memory notification list with All / Unread filter tabs.
-// Notifications can be dismissed by swiping, marked as read by tapping,
-// or cleared in bulk.
+// Displays the reactive notification list with All / Unread filter tabs.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
-import 'package:movie_watchlist/features/notifications/data/services/notification_service.dart';
+import 'package:movie_watchlist/features/notifications/domain/entities/app_notification.dart';
+import 'package:movie_watchlist/features/notifications/presentation/providers/notification_providers.dart';
 
 enum _NotifFilter { all, unread }
 
-/// Notification list screen with All / Unread filter tabs.
-///
-/// Reads from [NotificationService.notifications] (in-memory list).
-/// Swipe-to-dismiss removes individual notifications; tapping marks them read.
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   _NotifFilter _filter = _NotifFilter.all;
 
   @override
   Widget build(BuildContext context) {
-    final allNotifications = NotificationService.notifications;
+    final allNotifications = ref.watch(notificationNotifierProvider);
+    final notifier = ref.read(notificationNotifierProvider.notifier);
     final notifications = _filter == _NotifFilter.unread
-        ? allNotifications.where((n) => n['isRead'] == false).toList()
+        ? allNotifications
+              .where((notification) => !notification.isRead)
+              .toList()
         : allNotifications;
-    final unreadCount =
-        allNotifications.where((n) => n['isRead'] == false).length;
+    final unreadCount = allNotifications
+        .where((notification) => !notification.isRead)
+        .length;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -47,13 +48,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           if (unreadCount > 0)
             TextButton(
-              onPressed: () {
-                setState(() {
-                  for (final n in allNotifications) {
-                    NotificationService.markAsRead(n['id'] as int);
-                  }
-                });
-              },
+              onPressed: notifier.markAllAsRead,
               child: const Text(
                 'Mark all read',
                 style: TextStyle(color: AppColors.primary, fontSize: 12),
@@ -61,11 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           if (allNotifications.isNotEmpty)
             TextButton(
-              onPressed: () {
-                setState(() {
-                  NotificationService.clearAll();
-                });
-              },
+              onPressed: notifier.clearAll,
               child: const Text(
                 'Clear All',
                 style: TextStyle(color: AppColors.primary),
@@ -75,7 +66,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: Column(
         children: [
-          // ── Filter tabs ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Container(
@@ -101,8 +91,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ),
           const SizedBox(height: 8),
-
-          // ── List or empty state ──
           Expanded(
             child: notifications.isEmpty
                 ? _EmptyState(isFiltered: _filter == _NotifFilter.unread)
@@ -110,78 +98,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     itemCount: notifications.length,
                     itemBuilder: (context, index) {
                       final notification = notifications[index];
-                      return Dismissible(
-                        key: Key(notification['id'].toString()),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: AppColors.error,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.delete,
-                              color: AppColors.textPrimary),
-                        ),
-                        onDismissed: (_) {
-                          setState(() {
-                            NotificationService.remove(
-                                notification['id'] as int);
-                          });
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: notification['isRead'] as bool
-                                ? AppColors.surface
-                                : AppColors.surfaceLight,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: notification['isRead'] as bool
-                                  ? AppColors.surfaceLight
-                                  : AppColors.primary,
-                              child: Icon(
-                                Icons.notifications,
-                                color: notification['isRead'] as bool
-                                    ? AppColors.textTertiary
-                                    : AppColors.textPrimary,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text(
-                              notification['title'] as String,
-                              style: TextStyle(
-                                color: notification['isRead'] as bool
-                                    ? AppColors.textTertiary
-                                    : AppColors.textPrimary,
-                                fontWeight: notification['isRead'] as bool
-                                    ? FontWeight.normal
-                                    : FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              notification['message'] as String,
-                              style: const TextStyle(
-                                  color: AppColors.textSecondary),
-                            ),
-                            trailing: Text(
-                              _formatTime(
-                                  notification['timestamp'] as DateTime),
-                              style: const TextStyle(
-                                color: AppColors.textTertiary,
-                                fontSize: 12,
-                              ),
-                            ),
-                            onTap: () {
-                              setState(() {
-                                NotificationService.markAsRead(
-                                    notification['id'] as int);
-                              });
-                            },
-                          ),
-                        ),
+                      return _NotificationTile(
+                        notification: notification,
+                        onDismissed: () => notifier.remove(notification.id),
+                        onTap: () => notifier.markAsRead(notification.id),
                       );
                     },
                   ),
@@ -190,8 +110,81 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
+}
 
-  /// Formats a [timestamp] as a human-readable relative time string.
+class _NotificationTile extends StatelessWidget {
+  const _NotificationTile({
+    required this.notification,
+    required this.onDismissed,
+    required this.onTap,
+  });
+
+  final AppNotification notification;
+  final VoidCallback onDismissed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: Key(notification.id.toString()),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        color: AppColors.error,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete, color: AppColors.textPrimary),
+      ),
+      onDismissed: (_) => onDismissed(),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        decoration: BoxDecoration(
+          color: notification.isRead
+              ? AppColors.surface
+              : AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: notification.isRead
+                  ? AppColors.surfaceLight
+                  : AppColors.primary.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              notification.isRead
+                  ? Icons.notifications_none
+                  : Icons.notifications_active,
+              color: notification.isRead
+                  ? AppColors.textTertiary
+                  : AppColors.primary,
+            ),
+          ),
+          title: Text(
+            notification.title,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: notification.isRead
+                  ? FontWeight.normal
+                  : FontWeight.bold,
+            ),
+          ),
+          subtitle: Text(
+            notification.message,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          trailing: Text(
+            _formatTime(notification.timestamp),
+            style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
+          ),
+          onTap: onTap,
+        ),
+      ),
+    );
+  }
+
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
@@ -260,7 +253,7 @@ class _EmptyState extends StatelessWidget {
             Container(
               width: 96,
               height: 96,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.surface,
                 shape: BoxShape.circle,
               ),

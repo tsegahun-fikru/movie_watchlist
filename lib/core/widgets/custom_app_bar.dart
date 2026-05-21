@@ -3,30 +3,33 @@
 // bell with an unread-count badge, and a search shortcut.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
-import 'package:movie_watchlist/features/notifications/data/services/notification_service.dart';
+import 'package:movie_watchlist/features/notifications/presentation/providers/notification_providers.dart';
 
 /// A [PreferredSizeWidget] AppBar with a notification badge and search button.
 ///
-/// The unread count is read synchronously from [NotificationService.unreadCount]
-/// so the badge updates whenever the widget rebuilds (e.g. after a setState in
-/// the parent or a navigation event).
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+/// The unread count is derived from Riverpod notification state, so the badge
+/// updates whenever notifications are added or marked as read.
+class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
-  Widget build(BuildContext context) {
-    final unreadCount = NotificationService.unreadCount;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     return AppBar(
       backgroundColor: AppColors.background,
       title: const Text(
         'Movies',
-        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       elevation: 0,
       actions: [
@@ -35,7 +38,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               tooltip: 'Notifications',
-              icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
+              icon: const Icon(
+                Icons.notifications_none,
+                color: AppColors.textPrimary,
+              ),
               onPressed: () => context.push('/notifications'),
             ),
             if (unreadCount > 0)
@@ -50,7 +56,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   child: Text(
                     '$unreadCount',
-                    style: const TextStyle(fontSize: 10, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),

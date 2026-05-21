@@ -5,10 +5,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
+import 'package:movie_watchlist/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:movie_watchlist/features/watchlist/presentation/providers/watchlist_providers.dart';
 import 'package:movie_watchlist/shared/models/movie.dart';
 import 'package:movie_watchlist/shared/models/tv_show.dart';
-import 'package:movie_watchlist/features/notifications/data/services/notification_service.dart';
 
 /// A heart-shaped icon button that adds or removes [item] from the watchlist.
 ///
@@ -54,18 +54,22 @@ class _WatchlistButtonState extends ConsumerState<WatchlistButton> {
       if (isSaved) {
         await service.removeItem(item);
         if (mounted) {
-          NotificationService.addNotification(
-            'Removed from Watchlist',
-            '$title was removed from your watchlist.',
-          );
+          ref
+              .read(notificationNotifierProvider.notifier)
+              .addNotification(
+                'Removed from Watchlist',
+                '$title was removed from your watchlist.',
+              );
         }
       } else {
         await service.addItem(item);
         if (mounted) {
-          NotificationService.addNotification(
-            'Added to Watchlist',
-            '$title was saved to your watchlist.',
-          );
+          ref
+              .read(notificationNotifierProvider.notifier)
+              .addNotification(
+                'Added to Watchlist',
+                '$title was saved to your watchlist.',
+              );
         }
       }
 
