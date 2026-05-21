@@ -2,6 +2,7 @@
 // Defines the authentication contract and its Firebase implementation.
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:movie_watchlist/core/error/exceptions.dart';
 
 /// Abstract contract for authentication operations.
 ///
@@ -13,6 +14,9 @@ abstract class AuthRepository {
 
   Future<User?> signInWithEmailAndPassword(String email, String password);
   Future<User?> signUpWithEmailAndPassword(String email, String password);
+  Future<void> updateDisplayName(String? displayName);
+  Future<void> reauthenticateWithPassword(String email, String password);
+  Future<void> deleteCurrentUser();
   Future<void> signOut();
 }
 
@@ -50,6 +54,59 @@ class FirebaseAuthRepository implements AuthRepository {
       password: password,
     );
     return credential.user;
+  }
+
+  @override
+  Future<void> updateDisplayName(String? displayName) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthenticationException('No signed-in user found.');
+    }
+
+    try {
+      await user.updateDisplayName(displayName);
+      await user.reload();
+    } on FirebaseAuthException catch (error) {
+      throw AuthenticationException(
+        error.message ?? 'Failed to update profile.',
+      );
+    }
+  }
+
+  @override
+  Future<void> reauthenticateWithPassword(String email, String password) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthenticationException('No signed-in user found.');
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+    } on FirebaseAuthException catch (error) {
+      throw AuthenticationException(
+        error.message ?? 'Failed to confirm your identity.',
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteCurrentUser() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthenticationException('No signed-in user found.');
+    }
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (error) {
+      throw AuthenticationException(
+        error.message ?? 'Failed to delete account.',
+      );
+    }
   }
 
   @override

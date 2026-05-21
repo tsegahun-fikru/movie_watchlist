@@ -5,10 +5,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
+import 'package:movie_watchlist/features/profile/domain/usecases/delete_account_use_case.dart';
+import 'package:movie_watchlist/features/profile/presentation/providers/profile_providers.dart';
 import 'package:movie_watchlist/features/watchlist/presentation/providers/watchlist_providers.dart';
 import 'package:movie_watchlist/features/watched/presentation/providers/watched_providers.dart';
 import 'package:movie_watchlist/features/movies/presentation/providers/movie_providers.dart';
@@ -22,10 +22,11 @@ import 'package:movie_watchlist/features/watchlist/data/models/watchlist_item.da
 const _kAvatarColorKey = 'profile_avatar_color';
 
 /// Persists the user's chosen avatar background colour in [SharedPreferences].
-final _avatarColorProvider =
-    StateNotifierProvider<_AvatarColorNotifier, Color>((ref) {
-  return _AvatarColorNotifier();
-});
+final _avatarColorProvider = StateNotifierProvider<_AvatarColorNotifier, Color>(
+  (ref) {
+    return _AvatarColorNotifier();
+  },
+);
 
 /// Manages the avatar colour state and persists it to [SharedPreferences].
 class _AvatarColorNotifier extends StateNotifier<Color> {
@@ -139,10 +140,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                           color: AppColors.surface,
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color: AppColors.background, width: 2),
+                            color: AppColors.background,
+                            width: 2,
+                          ),
                         ),
-                        child: const Icon(Icons.color_lens,
-                            size: 16, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.color_lens,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ],
@@ -169,8 +175,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Icon(Icons.edit,
-                          size: 16, color: AppColors.textTertiary),
+                      const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: AppColors.textTertiary,
+                      ),
                     ],
                   ),
                 ),
@@ -261,7 +270,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         icon: Icons.delete_forever_outlined,
                         title: 'Delete Account',
                         textColor: AppColors.error,
-                        onTap: () => _showDeleteAccountDialog(user.uid, user.email),
+                        onTap: () =>
+                            _showDeleteAccountDialog(user.uid, user.email),
                       ),
                     ],
                   ),
@@ -276,13 +286,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       ),
       error: (error, _) => Scaffold(
         backgroundColor: AppColors.background,
         body: Center(
-          child: Text('Error: $error',
-              style: const TextStyle(color: AppColors.error)),
+          child: Text(
+            'Error: $error',
+            style: const TextStyle(color: AppColors.error),
+          ),
         ),
       ),
     );
@@ -309,8 +322,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Choose avatar color',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          'Choose avatar color',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         content: Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -332,8 +347,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       : null,
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check,
-                        color: Colors.white, size: 20)
+                    ? const Icon(Icons.check, color: Colors.white, size: 20)
                     : null,
               ),
             );
@@ -342,8 +356,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
         ],
       ),
@@ -356,8 +372,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Display name',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          'Display name',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -376,23 +394,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () async {
               final name = controller.text.trim();
               Navigator.of(ctx).pop();
               try {
-                final user = ref.read(firebaseAuthProvider).currentUser;
-                await user?.updateDisplayName(name.isEmpty ? null : name);
-                // Force auth state refresh
-                await user?.reload();
+                await ref
+                    .read(authRepositoryProvider)
+                    .updateDisplayName(name.isEmpty ? null : name);
                 ref.invalidate(authStateChangesProvider);
-              } catch (_) {}
+              } catch (error) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $error'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
-            child: const Text('Save',
-                style: TextStyle(color: AppColors.primary)),
+            child: const Text(
+              'Save',
+              style: TextStyle(color: AppColors.primary),
+            ),
           ),
         ],
       ),
@@ -405,8 +435,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(l10n.logout,
-            style: const TextStyle(color: AppColors.textPrimary)),
+        title: Text(
+          l10n.logout,
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
         content: Text(
           l10n.logoutConfirmation,
           style: const TextStyle(color: AppColors.textSecondary),
@@ -414,16 +446,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.cancel,
-                style: const TextStyle(color: AppColors.textSecondary)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               ref.read(authRepositoryProvider).signOut();
             },
-            child: Text(l10n.logout,
-                style: const TextStyle(color: AppColors.error)),
+            child: Text(
+              l10n.logout,
+              style: const TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -446,44 +482,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              _confirmDeleteAccount(uid, email);
+              if (email != null && email.isNotEmpty) {
+                _showReauthForDeleteDialog(uid, email);
+              } else {
+                _deleteAccount(uid);
+              }
             },
-            child: const Text('Delete',
-                style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _confirmDeleteAccount(String uid, String? email) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    // Try to delete directly; if requires-recent-login, prompt for password
-    try {
-      await _deleteUserData(uid);
-      await user.delete();
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'requires-recent-login' && email != null) {
-        _showReauthForDeleteDialog(uid, email);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${e.message}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    }
   }
 
   void _showReauthForDeleteDialog(String uid, String email) {
@@ -492,8 +512,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Confirm Identity',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          'Confirm Identity',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -522,60 +544,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
-              final user = FirebaseAuth.instance.currentUser;
-              if (user == null) return;
-              try {
-                final credential = EmailAuthProvider.credential(
-                  email: email,
-                  password: passwordController.text.trim(),
-                );
-                await user.reauthenticateWithCredential(credential);
-                await _deleteUserData(uid);
-                await user.delete();
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                }
-              }
+              await _deleteAccount(
+                uid,
+                email: email,
+                password: passwordController.text,
+              );
             },
-            child: const Text('Delete',
-                style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// Deletes all Firestore data for [uid] (watchlist + watched + user doc).
-  Future<void> _deleteUserData(String uid) async {
-    final firestore = FirebaseFirestore.instance;
-    // Delete watchlist
-    final watchlistRef =
-        firestore.collection('users').doc(uid).collection('watchlist');
-    final watchlistDocs = await watchlistRef.get();
-    for (final doc in watchlistDocs.docs) {
-      await doc.reference.delete();
-    }
-    // Delete watched
-    final watchedRef =
-        firestore.collection('users').doc(uid).collection('watched');
-    final watchedDocs = await watchedRef.get();
-    for (final doc in watchedDocs.docs) {
-      await doc.reference.delete();
-    }
-    // Delete user document
-    await firestore.collection('users').doc(uid).delete();
+  Future<void> _deleteAccount(
+    String uid, {
+    String? email,
+    String? password,
+  }) async {
+    final result = await ref.read(deleteAccountUseCaseProvider)(
+      DeleteAccountParams(uid: uid, email: email, password: password),
+    );
+
+    if (!mounted) return;
+
+    result.when(
+      success: (_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your account has been deleted.'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        context.go('/login');
+      },
+      failure: (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${failure.message}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      },
+    );
   }
 
   void _showLanguageDialog() {
@@ -585,34 +607,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(l10n.selectLanguage,
-            style: const TextStyle(color: AppColors.textPrimary)),
+        title: Text(
+          l10n.selectLanguage,
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text(l10n.english,
-                  style: const TextStyle(color: AppColors.textPrimary)),
+              title: Text(
+                l10n.english,
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
               trailing: currentLocale.languageCode == 'en'
                   ? const Icon(Icons.check, color: AppColors.primary)
                   : null,
               onTap: () {
-                ref
-                    .read(localeProvider.notifier)
-                    .setLocale(const Locale('en'));
+                ref.read(localeProvider.notifier).setLocale(const Locale('en'));
                 Navigator.pop(ctx);
               },
             ),
             ListTile(
-              title: Text(l10n.amharic,
-                  style: const TextStyle(color: AppColors.textPrimary)),
+              title: Text(
+                l10n.amharic,
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
               trailing: currentLocale.languageCode == 'am'
                   ? const Icon(Icons.check, color: AppColors.primary)
                   : null,
               onTap: () {
-                ref
-                    .read(localeProvider.notifier)
-                    .setLocale(const Locale('am'));
+                ref.read(localeProvider.notifier).setLocale(const Locale('am'));
                 Navigator.pop(ctx);
               },
             ),
@@ -665,13 +689,20 @@ class _StatCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 if (onTap != null) ...[
                   const SizedBox(width: 2),
-                  const Icon(Icons.chevron_right,
-                      size: 14, color: AppColors.textTertiary),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 14,
+                    color: AppColors.textTertiary,
+                  ),
                 ],
               ],
             ),
@@ -700,10 +731,11 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(icon, color: textColor ?? AppColors.primary),
-      title: Text(title,
-          style: TextStyle(color: textColor ?? AppColors.textPrimary)),
-      trailing:
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+      title: Text(
+        title,
+        style: TextStyle(color: textColor ?? AppColors.textPrimary),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
       onTap: onTap,
     );
   }
@@ -736,7 +768,8 @@ class _ExtendedStatsCard extends ConsumerWidget {
           final runtime = (item.data['runtime'] as num?)?.toInt() ?? 0;
           totalMinutes += runtime;
 
-          final genreIds = (item.data['genre_ids'] as List?)
+          final genreIds =
+              (item.data['genre_ids'] as List?)
                   ?.map((e) => e as int)
                   .toList() ??
               [];
@@ -819,10 +852,7 @@ class _StatsRow extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         const Spacer(),
         Text(
