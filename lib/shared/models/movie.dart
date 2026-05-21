@@ -4,24 +4,32 @@
 // and detail endpoints (genres, videos, credits).
 
 import 'package:movie_watchlist/shared/models/cast_members.dart';
+import 'package:movie_watchlist/core/domain/entities/media_item.dart';
 
 /// Represents a movie from the TMDB API.
 ///
 /// Fields like [genres], [trailerKey], and [cast] are only populated when
 /// the detail endpoint (`/movie/{id}?append_to_response=videos,credits`) is
 /// used. List endpoints populate [genreIds] instead.
-class Movie {
+class Movie implements MediaItem {
+  @override
   final int id;
+  @override
   final String title;
   final String originalTitle;
+  @override
   final String posterPath;
+  @override
   final String backdropPath;
+  @override
   final String releaseDate;
   final double voteAverage;
   final int voteCount;
+  @override
   final String overview;
 
   /// Genre IDs from list endpoints (e.g. /movie/popular).
+  @override
   final List<int> genreIds;
   final double popularity;
   final String originalLanguage;
@@ -60,13 +68,21 @@ class Movie {
   });
 
   /// Full TMDB poster URL at w500 resolution. Empty string if no path.
+  @override
   String get posterUrl =>
       posterPath.isNotEmpty ? 'https://image.tmdb.org/t/p/w500$posterPath' : '';
 
   /// Full TMDB backdrop URL at w780 resolution. Empty string if no path.
+  @override
   String get backdropUrl => backdropPath.isNotEmpty
       ? 'https://image.tmdb.org/t/p/w780$backdropPath'
       : '';
+
+  @override
+  double get rating => voteAverage;
+
+  @override
+  String get type => 'movie';
 
   /// Parses a [Movie] from a TMDB JSON map.
   ///

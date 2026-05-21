@@ -3,24 +3,30 @@
 // Mirrors the structure of [Movie] but adapted for TV-specific TMDB fields.
 
 import 'package:movie_watchlist/shared/models/cast_members.dart';
+import 'package:movie_watchlist/core/domain/entities/media_item.dart';
 
 /// Represents a TV show from the TMDB API.
 ///
 /// Like [Movie], fields such as [genres], [trailerKey], [cast], and
 /// [numberOfSeasons] are only populated when the detail endpoint is used
 /// (`/tv/{id}?append_to_response=videos,credits`).
-class TvShow {
+class TvShow implements MediaItem {
+  @override
   final int id;
   final String name;
   final String originalName;
+  @override
   final String posterPath;
+  @override
   final String backdropPath;
   final String firstAirDate;
   final double voteAverage;
   final int voteCount;
+  @override
   final String overview;
 
   /// Genre IDs from list endpoints (e.g. /tv/popular).
+  @override
   final List<int> genreIds;
   final double popularity;
   final String originalLanguage;
@@ -70,6 +76,24 @@ class TvShow {
   String get fullBackdropUrl => backdropPath.isNotEmpty
       ? 'https://image.tmdb.org/t/p/w780$backdropPath'
       : '';
+
+  @override
+  String get title => name;
+
+  @override
+  String get releaseDate => firstAirDate;
+
+  @override
+  double get rating => voteAverage;
+
+  @override
+  String get type => 'tv';
+
+  @override
+  String get posterUrl => fullPosterUrl;
+
+  @override
+  String get backdropUrl => fullBackdropUrl;
 
   /// Parses a [TvShow] from a TMDB JSON map.
   ///
