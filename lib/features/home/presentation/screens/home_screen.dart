@@ -278,17 +278,7 @@ class _WatchlistRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final watchlistAsync = ref.watch(watchlistStreamProvider);
-    final moviesAsync = watchlistAsync.when(
-      data: (items) => AsyncValue.data(
-        items
-            .where((item) => item.type == 'movie')
-            .map((item) => item.toOriginal() as Movie)
-            .toList(),
-      ),
-      loading: () => const AsyncValue<List<Movie>>.loading(),
-      error: (err, stack) => AsyncValue<List<Movie>>.error(err, stack),
-    );
+    final moviesAsync = ref.watch(watchlistMoviesProvider);
 
     return moviesAsync.when(
       data: (items) {

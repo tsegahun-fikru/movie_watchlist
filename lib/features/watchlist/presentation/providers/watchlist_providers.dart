@@ -7,6 +7,8 @@ import 'package:movie_watchlist/core/providers/core_providers.dart';
 import 'package:movie_watchlist/features/auth/presentation/providers/auth_providers.dart';
 import 'package:movie_watchlist/features/watchlist/data/models/watchlist_item.dart';
 import 'package:movie_watchlist/features/watchlist/data/services/watchlist_service.dart';
+import 'package:movie_watchlist/shared/models/movie.dart';
+import 'package:movie_watchlist/shared/models/tv_show.dart';
 
 /// Provides a [WatchlistService] scoped to the current user.
 /// Returns `null` when no user is signed in so callers can guard accordingly.
@@ -23,4 +25,26 @@ final watchlistStreamProvider = StreamProvider<List<WatchlistItem>>((ref) {
   final service = ref.watch(watchlistServiceProvider);
   if (service == null) return Stream.value([]);
   return service.getWatchlistStream();
+});
+
+final watchlistMoviesProvider = Provider<AsyncValue<List<Movie>>>((ref) {
+  return ref
+      .watch(watchlistStreamProvider)
+      .whenData(
+        (items) => items
+            .where((item) => item.type == 'movie')
+            .map((item) => item.toOriginal() as Movie)
+            .toList(growable: false),
+      );
+});
+
+final watchlistTvShowsProvider = Provider<AsyncValue<List<TvShow>>>((ref) {
+  return ref
+      .watch(watchlistStreamProvider)
+      .whenData(
+        (items) => items
+            .where((item) => item.type == 'tv')
+            .map((item) => item.toOriginal() as TvShow)
+            .toList(growable: false),
+      );
 });
