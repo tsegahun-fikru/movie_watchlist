@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/core/widgets/movie_card.dart';
 import 'package:movie_watchlist/core/widgets/shimmer_loading.dart';
@@ -31,10 +32,8 @@ final recommendationsProvider = FutureProvider<List<Movie>>((ref) async {
   // Tally genre IDs across all watchlist items
   final genreFrequency = <int, int>{};
   for (final item in watchlistItems) {
-    final genreIds = (item.data['genre_ids'] as List?)
-            ?.map((e) => e as int)
-            .toList() ??
-        [];
+    final genreIds =
+        (item.data['genre_ids'] as List?)?.map((e) => e as int).toList() ?? [];
     for (final id in genreIds) {
       genreFrequency[id] = (genreFrequency[id] ?? 0) + 1;
     }
@@ -81,8 +80,11 @@ class RecommendationsRow extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Row(
                 children: [
-                  const Icon(Icons.recommend,
-                      color: AppColors.primary, size: 18),
+                  const Icon(
+                    Icons.recommend,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                   const SizedBox(width: 6),
                   const Text(
                     'Recommended For You',
@@ -102,7 +104,7 @@ class RecommendationsRow extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 itemCount: movies.length,
                 itemBuilder: (_, i) => GestureDetector(
-                  onTap: () => context.push('/details', extra: movies[i]),
+                  onTap: () => context.push(mediaDetailsPath(movies[i])),
                   child: MovieCard(movie: movies[i]),
                 ),
               ),

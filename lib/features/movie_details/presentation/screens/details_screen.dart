@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/shared/models/movie.dart';
 import 'package:movie_watchlist/shared/models/tv_show.dart';
@@ -60,7 +61,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     if (item is Movie) {
       if (item.genres.isEmpty || item.cast.isEmpty || item.trailerKey == null) {
         try {
-          final json = await ref.read(legacyTmdbRepositoryProvider).getMovieDetails(item.id);
+          final json = await ref
+              .read(legacyTmdbRepositoryProvider)
+              .getMovieDetails(item.id);
           item = Movie.fromJson(json);
         } catch (e) {
           // Fallback to original item if fetch fails
@@ -69,7 +72,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     } else if (item is TvShow) {
       if (item.genres.isEmpty || item.cast.isEmpty || item.trailerKey == null) {
         try {
-          final json = await ref.read(legacyTmdbRepositoryProvider).getTvDetails(item.id);
+          final json = await ref
+              .read(legacyTmdbRepositoryProvider)
+              .getTvDetails(item.id);
           item = TvShow.fromJson(json);
         } catch (e) {
           // Fallback
@@ -79,7 +84,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
 
     if (mounted) {
       // Pre-initialize the trailer controller as soon as the key is available
-      final trailerKey = item is Movie ? item.trailerKey : (item as TvShow).trailerKey;
+      final trailerKey = item is Movie
+          ? item.trailerKey
+          : (item as TvShow).trailerKey;
       if (trailerKey != null && trailerKey.isNotEmpty) {
         _trailerController = YoutubePlayerController(
           initialVideoId: trailerKey,
@@ -113,7 +120,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     if (_isLoading || _enrichedItem == null) {
       return const Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
@@ -242,12 +251,17 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                 padding: const EdgeInsets.only(left: 148, right: 16, top: 8),
                 child: TextButton.icon(
                   onPressed: toggleTrailer,
-                  icon: const Icon(Icons.play_circle_fill,
-                      color: AppColors.primary, size: 18),
+                  icon: const Icon(
+                    Icons.play_circle_fill,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                   label: const Text(
                     'Watch Trailer',
                     style: TextStyle(
-                        color: AppColors.textPrimary, fontSize: 13),
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ),
@@ -299,7 +313,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                     children: [
                       _TmdbRatingWidget(
                         rating: rating,
-                        voteCount: isMovie ? movie!.voteCount : tvShow!.voteCount,
+                        voteCount: isMovie
+                            ? movie!.voteCount
+                            : tvShow!.voteCount,
                       ),
                       if (isMovie) _infoChip(Icons.calendar_today, year),
                       if (tvShow != null)
@@ -330,7 +346,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                                   fontSize: 12,
                                 ),
                               ),
-                              backgroundColor: AppColors.primary.withValues(alpha: 0.7),
+                              backgroundColor: AppColors.primary.withValues(
+                                alpha: 0.7,
+                              ),
                               materialTapTargetSize:
                                   MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -363,12 +381,14 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                               label: Text('Season $seasonNumber'),
                               backgroundColor: AppColors.surfaceLight,
                               labelStyle: const TextStyle(
-                                  color: AppColors.textPrimary),
+                                color: AppColors.textPrimary,
+                              ),
                               side: BorderSide.none,
                               onPressed: () => showSeasonEpisodesSheet(
                                 context: context,
-                                repository: ref
-                                    .read(legacyTmdbRepositoryProvider),
+                                repository: ref.read(
+                                  legacyTmdbRepositoryProvider,
+                                ),
                                 seriesId: id,
                                 seasonNumber: seasonNumber,
                                 showName: title,
@@ -409,8 +429,12 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: WhereToWatchSection(
                 providersFuture: isMovie
-                    ? ref.read(legacyTmdbRepositoryProvider).getMovieWatchProviders(id, region)
-                    : ref.read(legacyTmdbRepositoryProvider).getTvWatchProviders(id, region),
+                    ? ref
+                          .read(legacyTmdbRepositoryProvider)
+                          .getMovieWatchProviders(id, region)
+                    : ref
+                          .read(legacyTmdbRepositoryProvider)
+                          .getTvWatchProviders(id, region),
               ),
             ),
 
@@ -448,7 +472,10 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       children: [
         Icon(icon, color: AppColors.textTertiary, size: 18),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        Text(
+          text,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        ),
       ],
     );
   }
@@ -517,8 +544,10 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                             : null,
                         backgroundColor: AppColors.surfaceLight,
                         child: actor.profileUrl.isEmpty
-                            ? const Icon(Icons.person,
-                                color: AppColors.textTertiary)
+                            ? const Icon(
+                                Icons.person,
+                                color: AppColors.textTertiary,
+                              )
                             : null,
                       ),
                       const SizedBox(height: 4),
@@ -589,8 +618,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                 child: GridView.builder(
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
                     childAspectRatio: 0.7,
                     crossAxisSpacing: 12,
@@ -617,8 +645,11 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                                 : null,
                             backgroundColor: AppColors.surfaceLight,
                             child: actor.profileUrl.isEmpty
-                                ? const Icon(Icons.person,
-                                    color: AppColors.textTertiary, size: 28)
+                                ? const Icon(
+                                    Icons.person,
+                                    color: AppColors.textTertiary,
+                                    size: 28,
+                                  )
                                 : null,
                           ),
                           const SizedBox(height: 6),
@@ -696,18 +727,12 @@ class _TmdbRatingWidget extends StatelessWidget {
         ),
         const Text(
           '/10',
-          style: TextStyle(
-            color: AppColors.textTertiary,
-            fontSize: 13,
-          ),
+          style: TextStyle(color: AppColors.textTertiary, fontSize: 13),
         ),
         const SizedBox(width: 6),
         Text(
           '(${_formatVoteCount(voteCount)})',
-          style: const TextStyle(
-            color: AppColors.textTertiary,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: AppColors.textTertiary, fontSize: 12),
         ),
         const SizedBox(width: 6),
         Container(
@@ -787,7 +812,8 @@ class _DetailHeroBanner extends StatelessWidget {
                         color: AppColors.surface,
                         child: const Center(
                           child: CircularProgressIndicator(
-                              color: AppColors.primary),
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                       errorWidget: (_, __, ___) =>
@@ -873,11 +899,11 @@ class _SimilarSectionState extends State<_SimilarSection> {
     super.initState();
     _future = widget.isMovie
         ? widget.repository
-            .getSimilarMovies(widget.id)
-            .then((list) => list.cast<Object>())
+              .getSimilarMovies(widget.id)
+              .then((list) => list.cast<Object>())
         : widget.repository
-            .getSimilarTvShows(widget.id)
-            .then((list) => list.cast<Object>());
+              .getSimilarTvShows(widget.id)
+              .then((list) => list.cast<Object>());
   }
 
   @override
@@ -904,11 +930,11 @@ class _SimilarSectionState extends State<_SimilarSection> {
                     setState(() {
                       _future = widget.isMovie
                           ? widget.repository
-                              .getSimilarMovies(widget.id)
-                              .then((list) => list.cast<Object>())
+                                .getSimilarMovies(widget.id)
+                                .then((list) => list.cast<Object>())
                           : widget.repository
-                              .getSimilarTvShows(widget.id)
-                              .then((list) => list.cast<Object>());
+                                .getSimilarTvShows(widget.id)
+                                .then((list) => list.cast<Object>());
                     });
                   },
                   icon: const Icon(Icons.refresh, size: 16),
@@ -954,11 +980,12 @@ class _SimilarSectionState extends State<_SimilarSection> {
                   final posterUrl = item is Movie
                       ? item.posterUrl
                       : (item as TvShow).fullPosterUrl;
-                  final title =
-                      item is Movie ? item.title : (item as TvShow).name;
+                  final title = item is Movie
+                      ? item.title
+                      : (item as TvShow).name;
 
                   return GestureDetector(
-                    onTap: () => context.push('/details', extra: item),
+                    onTap: () => context.push(mediaDetailsPathForObject(item)),
                     child: Container(
                       width: 120,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -972,12 +999,14 @@ class _SimilarSectionState extends State<_SimilarSection> {
                                 imageUrl: posterUrl,
                                 fit: BoxFit.cover,
                                 width: double.infinity,
-                                placeholder: (_, __) => Container(
-                                    color: AppColors.surfaceLight),
+                                placeholder: (_, __) =>
+                                    Container(color: AppColors.surfaceLight),
                                 errorWidget: (_, __, ___) => Container(
                                   color: AppColors.surfaceLight,
-                                  child: const Icon(Icons.broken_image,
-                                      color: AppColors.textTertiary),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: AppColors.textTertiary,
+                                  ),
                                 ),
                               ),
                             ),

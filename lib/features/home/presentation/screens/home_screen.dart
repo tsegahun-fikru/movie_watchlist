@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/movies/presentation/providers/movie_providers.dart';
 import 'package:movie_watchlist/features/watchlist/presentation/providers/watchlist_providers.dart';
@@ -185,11 +186,12 @@ class _HeroItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use backdrop (16:9 landscape) — fits the container perfectly
-    final imageUrl =
-        movie.backdropUrl.isNotEmpty ? movie.backdropUrl : movie.posterUrl;
+    final imageUrl = movie.backdropUrl.isNotEmpty
+        ? movie.backdropUrl
+        : movie.posterUrl;
 
     return GestureDetector(
-      onTap: () => context.push('/details', extra: movie),
+      onTap: () => context.push(mediaDetailsPath(movie)),
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -235,20 +237,27 @@ class _HeroItem extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded,
-                        color: AppColors.star, size: 14),
+                    const Icon(
+                      Icons.star_rounded,
+                      color: AppColors.star,
+                      size: 14,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       movie.voteAverage.toStringAsFixed(1),
                       style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12),
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                     if (movie.releaseDate.length >= 4) ...[
                       const SizedBox(width: 10),
                       Text(
                         movie.releaseDate.substring(0, 4),
                         style: const TextStyle(
-                            color: AppColors.textTertiary, fontSize: 12),
+                          color: AppColors.textTertiary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ],
@@ -284,7 +293,12 @@ class _WatchlistRow extends ConsumerWidget {
     return moviesAsync.when(
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        return _buildList(context, items, 'My Watchlist', (movie) => MovieCard(movie: movie));
+        return _buildList(
+          context,
+          items,
+          'My Watchlist',
+          (movie) => MovieCard(movie: movie),
+        );
       },
       loading: () => const _SkeletonRow(),
       error: (_, __) => const SizedBox.shrink(),
@@ -296,7 +310,7 @@ class _WatchlistRow extends ConsumerWidget {
 ///
 /// Shows a shimmer skeleton while loading, a retry button on error, and
 /// hides itself when the list is empty.
-class _HorizontalMediaList<T> extends ConsumerWidget {
+class _HorizontalMediaList<T extends Object> extends ConsumerWidget {
   final ProviderListenable<AsyncValue<List<T>>> provider;
   final ProviderOrFamily? refreshProvider;
   final String title;
@@ -347,7 +361,12 @@ class _HorizontalMediaList<T> extends ConsumerWidget {
   }
 }
 
-Widget _buildList<T>(BuildContext context, List<T> items, String title, Widget Function(T) itemBuilder) {
+Widget _buildList<T extends Object>(
+  BuildContext context,
+  List<T> items,
+  String title,
+  Widget Function(T) itemBuilder,
+) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -369,7 +388,7 @@ Widget _buildList<T>(BuildContext context, List<T> items, String title, Widget F
           padding: const EdgeInsets.symmetric(horizontal: 8),
           itemCount: items.length,
           itemBuilder: (_, i) => GestureDetector(
-            onTap: () => context.push('/details', extra: items[i]),
+            onTap: () => context.push(mediaDetailsPathForObject(items[i])),
             child: itemBuilder(items[i]),
           ),
         ),
@@ -393,7 +412,8 @@ class _SkeletonRow extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             itemCount: 5,
-            itemBuilder: (_, __) => const ShimmerLoading(child: MovieCardSkeleton()),
+            itemBuilder: (_, __) =>
+                const ShimmerLoading(child: MovieCardSkeleton()),
           ),
         ),
       ],
@@ -438,10 +458,7 @@ class _GenreChipsRow extends ConsumerWidget {
                   side: const BorderSide(color: Colors.white12),
                   onPressed: () => context.push(
                     '/genre-browse',
-                    extra: {
-                      'genreId': entry.key,
-                      'genreName': entry.value,
-                    },
+                    extra: {'genreId': entry.key, 'genreName': entry.value},
                   ),
                 ),
               );

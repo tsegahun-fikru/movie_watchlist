@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/watchlist/presentation/providers/watchlist_providers.dart';
 import 'package:go_router/go_router.dart';
@@ -24,12 +25,14 @@ enum WatchlistFilter { all, moviesOnly, tvOnly }
 // ─── Providers ────────────────────────────────────────────────────────────────
 
 /// Persists the active sort order for the watchlist grid.
-final watchlistSortProvider =
-    StateProvider<WatchlistSort>((ref) => WatchlistSort.dateAdded);
+final watchlistSortProvider = StateProvider<WatchlistSort>(
+  (ref) => WatchlistSort.dateAdded,
+);
 
 /// Persists the active content-type filter for the watchlist grid.
-final watchlistFilterProvider =
-    StateProvider<WatchlistFilter>((ref) => WatchlistFilter.all);
+final watchlistFilterProvider = StateProvider<WatchlistFilter>(
+  (ref) => WatchlistFilter.all,
+);
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -122,7 +125,8 @@ class WatchlistScreen extends ConsumerWidget {
                   }
 
                   return GestureDetector(
-                    onTap: () => context.push('/details', extra: original),
+                    onTap: () =>
+                        context.push(mediaDetailsPathForObject(original)),
                     child: card,
                   );
                 },
@@ -131,10 +135,13 @@ class WatchlistScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
         error: (error, _) => Center(
-          child: Text('Error: $error',
-              style: const TextStyle(color: AppColors.error)),
+          child: Text(
+            'Error: $error',
+            style: const TextStyle(color: AppColors.error),
+          ),
         ),
       ),
     );
@@ -284,12 +291,15 @@ class _SortFilterSheetState extends State<_SortFilterSheet> {
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text(
                 'Apply',
                 style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -324,8 +334,11 @@ class _SortOption extends StatelessWidget {
       ),
       trailing: selected
           ? const Icon(Icons.check_circle, color: AppColors.primary, size: 20)
-          : const Icon(Icons.circle_outlined,
-              color: AppColors.textTertiary, size: 20),
+          : const Icon(
+              Icons.circle_outlined,
+              color: AppColors.textTertiary,
+              size: 20,
+            ),
       onTap: onTap,
     );
   }

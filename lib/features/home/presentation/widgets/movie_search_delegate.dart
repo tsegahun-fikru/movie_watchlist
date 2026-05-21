@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/core/di/clean_arch_providers.dart';
 import 'package:movie_watchlist/features/movies/presentation/widgets/movie_search_filter_bar.dart';
@@ -17,9 +18,7 @@ import 'package:movie_watchlist/shared/models/tv_show.dart';
 enum _SearchTab { movies, tv }
 
 /// Tracks which search tab (Movies or TV) is currently active.
-final _searchTabProvider = StateProvider<_SearchTab>(
-  (_) => _SearchTab.movies,
-);
+final _searchTabProvider = StateProvider<_SearchTab>((_) => _SearchTab.movies);
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
@@ -110,9 +109,7 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
     final movieQuery = ref.watch(
       movieSearchNotifierProvider.select((s) => s.query),
     );
-    final tvQuery = ref.watch(
-      tvSearchNotifierProvider.select((s) => s.query),
-    );
+    final tvQuery = ref.watch(tvSearchNotifierProvider.select((s) => s.query));
     final activeQuery = tab == _SearchTab.movies ? movieQuery : tvQuery;
 
     if (_controller.text != activeQuery) {
@@ -143,14 +140,18 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
               hintStyle: const TextStyle(color: AppColors.textTertiary),
               filled: true,
               fillColor: AppColors.surface,
-              prefixIcon:
-                  const Icon(Icons.search, color: AppColors.textSecondary),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
+              ),
               suffixIcon: activeQuery.isEmpty
                   ? null
                   : IconButton(
                       onPressed: _clearQuery,
-                      icon: const Icon(Icons.close,
-                          color: AppColors.textSecondary),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -165,10 +166,14 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
             builder: (context, ref, _) {
               final isMovies = tab == _SearchTab.movies;
               final hasFilters = isMovies
-                  ? !ref.watch(movieSearchNotifierProvider
-                      .select((s) => s.filters.isEmpty))
+                  ? !ref.watch(
+                      movieSearchNotifierProvider.select(
+                        (s) => s.filters.isEmpty,
+                      ),
+                    )
                   : !ref.watch(
-                      tvSearchNotifierProvider.select((s) => s.filters.isEmpty));
+                      tvSearchNotifierProvider.select((s) => s.filters.isEmpty),
+                    );
               return IconButton(
                 icon: Badge(
                   isLabelVisible: hasFilters,
@@ -204,17 +209,19 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
             Expanded(
               child: tab == _SearchTab.movies
                   ? (movieQuery.isEmpty
-                      ? SearchHistoryWidget(
-                          onQuerySelected: _selectHistoryQuery,
-                        )
-                      : MovieSearchResultList(
-                          scrollController: _scrollController))
+                        ? SearchHistoryWidget(
+                            onQuerySelected: _selectHistoryQuery,
+                          )
+                        : MovieSearchResultList(
+                            scrollController: _scrollController,
+                          ))
                   : (tvQuery.isEmpty
-                      ? SearchHistoryWidget(
-                          onQuerySelected: _selectHistoryQuery,
-                        )
-                      : _TvSearchResultList(
-                          scrollController: _scrollController)),
+                        ? SearchHistoryWidget(
+                            onQuerySelected: _selectHistoryQuery,
+                          )
+                        : _TvSearchResultList(
+                            scrollController: _scrollController,
+                          )),
             ),
           ],
         ),
@@ -278,8 +285,10 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
                           }
                           Navigator.of(context).pop();
                         },
-                        child: const Text('Clear all',
-                            style: TextStyle(color: AppColors.primary)),
+                        child: const Text(
+                          'Clear all',
+                          style: TextStyle(color: AppColors.primary),
+                        ),
                       ),
                     ),
                   ],
@@ -305,12 +314,16 @@ class _MovieSearchScreenState extends ConsumerState<MovieSearchScreen> {
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text('Apply',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Apply',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -388,20 +401,15 @@ class _ToggleOption extends StatelessWidget {
               Icon(
                 icon,
                 size: 16,
-                color: selected
-                    ? Colors.white
-                    : AppColors.textTertiary,
+                color: selected ? Colors.white : AppColors.textTertiary,
               ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight:
-                      selected ? FontWeight.bold : FontWeight.normal,
-                  color: selected
-                      ? Colors.white
-                      : AppColors.textTertiary,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  color: selected ? Colors.white : AppColors.textTertiary,
                 ),
               ),
             ],
@@ -482,7 +490,7 @@ class _TvSearchTile extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: () => context.push('/details', extra: show),
+      onTap: () => context.push(mediaDetailsPath(show)),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -501,8 +509,10 @@ class _TvSearchTile extends StatelessWidget {
                 child: show.fullPosterUrl.isEmpty
                     ? Container(
                         color: AppColors.surfaceLight,
-                        child: const Icon(Icons.tv,
-                            color: AppColors.textTertiary),
+                        child: const Icon(
+                          Icons.tv,
+                          color: AppColors.textTertiary,
+                        ),
                       )
                     : CachedNetworkImage(
                         imageUrl: show.fullPosterUrl,
@@ -519,7 +529,9 @@ class _TvSearchTile extends StatelessWidget {
                   // TV badge
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),

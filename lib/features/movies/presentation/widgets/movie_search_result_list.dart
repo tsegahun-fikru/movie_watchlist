@@ -6,10 +6,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/core/di/clean_arch_providers.dart';
 import 'package:movie_watchlist/features/movies/domain/entities/movie.dart';
-import 'package:movie_watchlist/shared/models/movie.dart' as legacy;
 
 /// Renders the list of movies from [movieSearchNotifierProvider].
 ///
@@ -89,9 +89,8 @@ class MovieSearchResultList extends ConsumerWidget {
 
 /// A single row tile for a movie search result.
 ///
-/// Converts the clean-arch [Movie] entity to the shared [legacy.Movie] model
-/// before navigating to the detail screen, since [DetailScreen] expects the
-/// shared model.
+/// Navigates with stable route parameters so search results support cold
+/// starts and state restoration.
 class _MovieSearchTile extends StatelessWidget {
   const _MovieSearchTile({required this.movie});
 
@@ -106,24 +105,7 @@ class _MovieSearchTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
-        // Map the clean-arch entity back to the shared legacy model for navigation
-        context.push(
-          '/details',
-          extra: legacy.Movie(
-            id: movie.id,
-            title: movie.title,
-            originalTitle: movie.title,
-            posterPath: movie.posterPath,
-            backdropPath: '',
-            releaseDate: movie.releaseDate,
-            voteAverage: movie.rating,
-            voteCount: 0,
-            overview: movie.overview,
-            genreIds: movie.genreIds,
-            popularity: 0,
-            originalLanguage: '',
-          ),
-        );
+        context.push(mediaDetailsPathById('movie', movie.id));
       },
       child: Container(
         decoration: BoxDecoration(
@@ -183,7 +165,10 @@ class _MovieSearchTile extends StatelessWidget {
                         : movie.overview,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppColors.textTertiary.withValues(alpha: 0.85), height: 1.4),
+                    style: TextStyle(
+                      color: AppColors.textTertiary.withValues(alpha: 0.85),
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),

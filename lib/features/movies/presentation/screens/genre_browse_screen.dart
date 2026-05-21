@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/movies/presentation/providers/movie_providers.dart';
 import 'package:movie_watchlist/features/movies/data/repositories/legacy_tmdb_repository.dart';
@@ -57,14 +58,21 @@ class _GenreBrowseNotifier extends StateNotifier<_GenreBrowseState> {
   final int genreId;
   final LegacyTmdbRepository _repo;
 
-  _GenreBrowseNotifier({required this.genreId, required LegacyTmdbRepository repo})
-      : _repo = repo,
-        super(const _GenreBrowseState()) {
+  _GenreBrowseNotifier({
+    required this.genreId,
+    required LegacyTmdbRepository repo,
+  }) : _repo = repo,
+       super(const _GenreBrowseState()) {
     loadFirstPage();
   }
 
   Future<void> loadFirstPage() async {
-    state = state.copyWith(isLoading: true, movies: [], currentPage: 0, hasMore: true);
+    state = state.copyWith(
+      isLoading: true,
+      movies: [],
+      currentPage: 0,
+      hasMore: true,
+    );
     try {
       final movies = await _repo.discoverMovies(genreIds: [genreId]);
       state = state.copyWith(
@@ -83,10 +91,7 @@ class _GenreBrowseNotifier extends StateNotifier<_GenreBrowseState> {
     state = state.copyWith(isLoadingMore: true);
     try {
       // TMDB discover doesn't support pagination in the legacy repo, stop after first page
-      state = state.copyWith(
-        isLoadingMore: false,
-        hasMore: false,
-      );
+      state = state.copyWith(isLoadingMore: false, hasMore: false);
     } catch (e) {
       state = state.copyWith(isLoadingMore: false);
     }
@@ -116,7 +121,7 @@ class GenreBrowseScreen extends ConsumerStatefulWidget {
 class _GenreBrowseScreenState extends ConsumerState<GenreBrowseScreen> {
   late final ScrollController _scrollController;
   late final StateNotifierProvider<_GenreBrowseNotifier, _GenreBrowseState>
-      _provider;
+  _provider;
 
   @override
   void initState() {
@@ -240,7 +245,7 @@ class _GenreMovieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/details', extra: movie),
+      onTap: () => context.push(mediaDetailsPath(movie)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -256,14 +261,20 @@ class _GenreMovieCard extends StatelessWidget {
                           Container(color: AppColors.surfaceLight),
                       errorWidget: (_, __, ___) => Container(
                         color: AppColors.surface,
-                        child: const Icon(Icons.movie,
-                            color: AppColors.textTertiary, size: 40),
+                        child: const Icon(
+                          Icons.movie,
+                          color: AppColors.textTertiary,
+                          size: 40,
+                        ),
                       ),
                     )
                   : Container(
                       color: AppColors.surface,
-                      child: const Icon(Icons.movie,
-                          color: AppColors.textTertiary, size: 40),
+                      child: const Icon(
+                        Icons.movie,
+                        color: AppColors.textTertiary,
+                        size: 40,
+                      ),
                     ),
             ),
           ),
@@ -286,7 +297,9 @@ class _GenreMovieCard extends StatelessWidget {
               Text(
                 movie.voteAverage.toStringAsFixed(1),
                 style: const TextStyle(
-                    color: AppColors.textTertiary, fontSize: 11),
+                  color: AppColors.textTertiary,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),

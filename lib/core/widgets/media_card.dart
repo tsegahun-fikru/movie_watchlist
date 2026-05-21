@@ -4,6 +4,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/domain/entities/media_item.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 
@@ -15,7 +16,7 @@ class MediaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/details', extra: item),
+      onTap: () => context.push(mediaDetailsPath(item)),
       child: Container(
         width: 120,
         margin: const EdgeInsets.only(right: 12),

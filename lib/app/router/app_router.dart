@@ -20,6 +20,7 @@ import 'package:movie_watchlist/features/about/presentation/screens/about_screen
 import 'package:movie_watchlist/features/watched/presentation/screens/watched_screen.dart';
 import 'package:movie_watchlist/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:movie_watchlist/features/profile/presentation/screens/profile_screen.dart';
+import 'package:movie_watchlist/features/movie_details/presentation/screens/deep_link_media_loader.dart';
 import 'package:movie_watchlist/features/movie_details/presentation/screens/deep_link_movie_loader.dart';
 import 'package:movie_watchlist/features/movie_details/presentation/screens/details_screen.dart';
 import 'package:movie_watchlist/features/home/presentation/widgets/movie_search_delegate.dart';
@@ -83,14 +84,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignUpScreen(),
@@ -147,11 +142,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/watched',
         builder: (context, state) => const WatchedScreen(),
       ),
-      GoRoute(
-        path: '/about',
-        builder: (context, state) => const AboutScreen(),
-      ),
+      GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
       // Detail screen — item (Movie or TvShow) is passed via `extra`
+      GoRoute(
+        path: '/details/:type/:id',
+        builder: (context, state) {
+          final type = state.pathParameters['type'];
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          if ((type == 'movie' || type == 'tv') && id != null) {
+            return DeepLinkMediaLoader(type: type!, id: id);
+          }
+          return const Scaffold(body: Center(child: Text('Invalid item ID')));
+        },
+      ),
       GoRoute(
         path: '/details',
         builder: (context, state) {

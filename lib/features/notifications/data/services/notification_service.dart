@@ -5,6 +5,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/features/notifications/domain/entities/app_notification.dart';
 
 class NotificationService {
@@ -67,7 +68,7 @@ class NotificationService {
     final movieId = message.data['movie_id'];
     final id = movieId == null ? null : int.tryParse(movieId);
     if (id != null) {
-      context.push('/movie/$id');
+      context.push(mediaDetailsPathById('movie', id));
       return;
     }
 

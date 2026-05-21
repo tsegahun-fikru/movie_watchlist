@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/movies/data/repositories/legacy_tmdb_repository.dart';
 import 'package:movie_watchlist/shared/models/movie.dart';
@@ -21,10 +22,8 @@ Future<void> showCastMoviesSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _CastMoviesSheet(
-      repository: repository,
-      actorName: actorName,
-    ),
+    builder: (_) =>
+        _CastMoviesSheet(repository: repository, actorName: actorName),
   );
 }
 
@@ -32,10 +31,7 @@ class _CastMoviesSheet extends StatefulWidget {
   final LegacyTmdbRepository repository;
   final String actorName;
 
-  const _CastMoviesSheet({
-    required this.repository,
-    required this.actorName,
-  });
+  const _CastMoviesSheet({required this.repository, required this.actorName});
 
   @override
   State<_CastMoviesSheet> createState() => _CastMoviesSheetState();
@@ -161,11 +157,11 @@ class _CastMoviesSheetState extends State<_CastMoviesSheet> {
                       padding: const EdgeInsets.all(16),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        childAspectRatio: 0.6,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                      ),
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.6,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                          ),
                       itemCount: movies.length,
                       itemBuilder: (_, i) {
                         final movie = movies[i];
@@ -193,7 +189,7 @@ class _MoviePosterCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pop();
-        context.push('/details', extra: movie);
+        context.push(mediaDetailsPath(movie));
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,10 +217,7 @@ class _MoviePosterCard extends StatelessWidget {
                   : Container(
                       color: AppColors.surfaceLight,
                       child: const Center(
-                        child: Icon(
-                          Icons.movie,
-                          color: AppColors.textTertiary,
-                        ),
+                        child: Icon(Icons.movie, color: AppColors.textTertiary),
                       ),
                     ),
             ),

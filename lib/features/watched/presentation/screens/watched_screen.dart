@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:movie_watchlist/app/router/media_routes.dart';
 import 'package:movie_watchlist/core/theme/app_colors.dart';
 import 'package:movie_watchlist/features/watched/presentation/providers/watched_providers.dart';
 import 'package:movie_watchlist/features/watchlist/data/models/watchlist_item.dart';
@@ -54,8 +55,10 @@ class WatchedScreen extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
         error: (error, _) => Center(
-          child: Text('Error: $error',
-              style: const TextStyle(color: AppColors.error)),
+          child: Text(
+            'Error: $error',
+            style: const TextStyle(color: AppColors.error),
+          ),
         ),
       ),
     );
@@ -77,8 +80,10 @@ class WatchedScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -89,8 +94,10 @@ class WatchedScreen extends ConsumerWidget {
                 await service?.removeItem(item.toOriginal());
               }
             },
-            child: const Text('Clear all',
-                style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Clear all',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -124,7 +131,7 @@ class _WatchedGrid extends StatelessWidget {
           return _WatchedCard(
             item: watchItem,
             original: original,
-            onTap: () => context.push('/details', extra: original),
+            onTap: () => context.push(mediaDetailsPathForObject(original)),
           );
         },
       ),
@@ -214,8 +221,7 @@ class _WatchedCard extends ConsumerWidget {
               top: 8,
               left: 8,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(4),
@@ -291,16 +297,20 @@ class _WatchedCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
               await ref.read(watchedServiceProvider)?.removeItem(original);
             },
-            child: const Text('Remove',
-                style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
