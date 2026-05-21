@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:movie_watchlist/core/error/exceptions.dart';
 import 'package:movie_watchlist/core/error/failures.dart';
 import 'package:movie_watchlist/core/result/result.dart';
@@ -8,11 +10,16 @@ import 'package:movie_watchlist/features/movies/domain/entities/movie_page.dart'
 import 'package:movie_watchlist/features/movies/domain/repositories/movie_repository.dart';
 
 class MovieRepositoryImpl implements MovieRepository {
-  MovieRepositoryImpl({required TmdbRemoteDataSource remoteDataSource})
-    : _remoteDataSource = remoteDataSource;
+  MovieRepositoryImpl({
+    required TmdbRemoteDataSource remoteDataSource,
+    int maxMoviePageCacheEntries = 40,
+  }) : _remoteDataSource = remoteDataSource,
+       _maxMoviePageCacheEntries = maxMoviePageCacheEntries;
 
   final TmdbRemoteDataSource _remoteDataSource;
-  final Map<String, MoviePage> _moviePageCache = <String, MoviePage>{};
+  final int _maxMoviePageCacheEntries;
+  final LinkedHashMap<String, MoviePage> _moviePageCache =
+      LinkedHashMap<String, MoviePage>();
   List<Genre>? _genreCache;
 
   @override
@@ -25,7 +32,7 @@ class MovieRepositoryImpl implements MovieRepository {
         'search|${query.trim()}|${filters.genreId}|'
         '${filters.year}|${filters.minimumRating}|$page';
 
-    final cachedPage = _moviePageCache[cacheKey];
+    final cachedPage = _getCachedMoviePage(cacheKey);
     if (cachedPage != null) {
       return Success<MoviePage>(cachedPage);
     }
@@ -36,7 +43,7 @@ class MovieRepositoryImpl implements MovieRepository {
         filters: filters,
         page: page,
       );
-      _moviePageCache[cacheKey] = pageResult;
+      _cacheMoviePage(cacheKey, pageResult);
       return Success<MoviePage>(pageResult);
     } on ServerException catch (error) {
       return Error<MoviePage>(ServerFailure(error.message));
@@ -48,14 +55,14 @@ class MovieRepositoryImpl implements MovieRepository {
   @override
   Future<Result<MoviePage>> getTrendingMovies(int page) async {
     final cacheKey = 'trending|$page';
-    final cachedPage = _moviePageCache[cacheKey];
+    final cachedPage = _getCachedMoviePage(cacheKey);
     if (cachedPage != null) {
       return Success<MoviePage>(cachedPage);
     }
 
     try {
       final pageResult = await _remoteDataSource.getTrending(page: page);
-      _moviePageCache[cacheKey] = pageResult;
+      _cacheMoviePage(cacheKey, pageResult);
       return Success<MoviePage>(pageResult);
     } on ServerException catch (error) {
       return Error<MoviePage>(ServerFailure(error.message));
@@ -78,6 +85,23 @@ class MovieRepositoryImpl implements MovieRepository {
       return Error<List<Genre>>(ServerFailure(error.message));
     } catch (error) {
       return Error<List<Genre>>(UnknownFailure('$error'));
+    }
+  }
+
+  MoviePage? _getCachedMoviePage(String cacheKey) {
+    final cachedPage = _moviePageCache.remove(cacheKey);
+    if (cachedPage != null) {
+      _moviePageCache[cacheKey] = cachedPage;
+    }
+    return cachedPage;
+  }
+
+  void _cacheMoviePage(String cacheKey, MoviePage page) {
+    _moviePageCache.remove(cacheKey);
+    _moviePageCache[cacheKey] = page;
+
+    while (_moviePageCache.length > _maxMoviePageCacheEntries) {
+      _moviePageCache.remove(_moviePageCache.keys.first);
     }
   }
 }
